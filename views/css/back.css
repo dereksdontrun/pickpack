@@ -1,0 +1,134 @@
+/**
+* 2007-2020 PrestaShop
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Academic Free License (AFL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/afl-3.0.php
+* If you did not receive a copy of the license and are unable to
+* obtain it through the world-wide-web, please send an email
+* to license@prestashop.com so we can send you a copy immediately.
+*
+* DISCLAIMER
+*
+* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+* versions in the future. If you wish to customize PrestaShop for your
+* needs please refer to http://www.prestashop.com for more information.
+*
+*  @author    PrestaShop SA <contact@prestashop.com>
+*  @copyright 2007-2020 PrestaShop SA
+*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+*  International Registered Trademark & Property of PrestaShop SA
+*
+* Don't forget to prefix your containers with your own identifier
+* to avoid any conflicts with others containers.
+*/
+/* div.panel-footer {
+    padding: 20px !important;
+    height: 100% !important; 
+}
+
+.botones_pickpack {
+    width: 120px;
+} */
+
+.jumbotron_picking {
+    /* background-color: #c5b2e6 !important; */
+    background-color: #492365 !important;  
+    color: white;  
+}
+
+.jumbotron_packing {
+    /* background-color: #b8f8a0 !important;    */
+    background-color: #b5f72f !important; 
+}
+
+.jumbotron_sesion {
+    background-color: #ff0000 !important;  
+    color: white !important;  
+}
+
+.datos_cliente {
+    border-radius: 20px;
+    margin-left: 20px;
+    padding-left: 15px;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    background-color: white;  
+    color: black;
+}
+
+.container_productos {
+    padding: 20px;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-left: 10px;
+    margin-right: 5px;
+    /*background-color: #b8f8a0;*/
+}
+
+p.empleado {
+    font-style: italic;
+    padding-left: 20px;
+}
+
+blockquote.padquote {
+    padding-left: 20px;    
+}
+
+blockquote.nota_regalo {     
+    background-color: #c5b2e6;
+    font-size: x-large;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+blockquote.nota_cliente {     
+    background-color: #ee816d;
+    color: white;
+    font-size: large;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.badge-nocomenzado {
+    background-color: #e1ff59 !important;
+    color: black !important;
+}
+
+.badge-pickingabierto {
+    background-color: #32CD32 !important;
+    color: black !important;
+}
+
+.badge-incidenciapicking {
+    background-color: #FF8C00 !important;
+    color: black !important;
+}
+
+.badge-pickingfinalizado {
+    background-color: #bcb1ff !important;
+    color: black !important;
+}
+
+.badge-packingabierto {
+    background-color: #32cd97 !important;
+    color: black !important;
+}
+
+.badge-paqueteenviado {
+    background-color: #8A2BE2 !important;
+    color: black !important;
+}
+
+.badge-incidenciapacking {
+    background-color: #ffc334 !important;
+    color: black !important;
+}
+
+.badge-cancelado {
+    background-color: #DC143C !important;
+    color: black !important;
+}
