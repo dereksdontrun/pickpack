@@ -32,7 +32,7 @@ require_once(dirname(__FILE__).'/../../../../../init.php');
 //hacemos include de la clase para poder usar la función de buscar id_pickpack por id_order
 include dirname(__FILE__).'/../../../classes/PickPackOrder.php';
 
-//si llegamos aquí desde el controlador de AdminPicking trae el id de empleado por GET
+//si llegamos aquí desde pickpacklogin.php trae el id de empleado por GET
 if (isset($_GET['id_empleado'])) {
   $id_empleado = $_GET['id_empleado']; 
   $sql_nombre_empleado = 'SELECT firstname FROM lafrips_employee WHERE id_employee = '.$id_empleado;
@@ -52,30 +52,54 @@ if (isset($_GET['id_empleado'])) {
 } elseif(isset($_POST['submit_volver'])){
   buscarPedido();
 } else {
-  echo '<div class="jumbotron jumbotron_sesion">
-    <h1 class="display-4">Hola</h1>
-    <p class="lead">Tu sesión ha expirado o nunca se inició</p>
-    <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
-  </div>  ';
+  //si no se capta nada enviamos a pickpacklogin
+  $token = Tools::getAdminTokenLite('AdminModules');
+  $url_modulos = _MODULE_DIR_;
+
+  //$url = $url_modulos.'pickpack/controllers/admin/procesos/picking.php?token='.$token.'&id_empleado='.$id_empleado;  
+  $url = $url_modulos.'pickpack/controllers/admin/procesos/pickpacklogin.php?token='.$token;  
+
+  header("Location: $url");
+
+  // echo '<div class="jumbotron jumbotron_sesion">
+  //   <h1 class="display-4">Hola</h1>
+  //   <p class="lead">Tu sesión ha expirado o nunca se inició</p>
+  //   <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
+  // </div>  ';
 }
 
 function buscarPedido()
 {
   $nombre_empleado = $_SESSION["nombre_empleado"];  
-  //si no hay nada en la sesión pedimos que inicie sesión en Prestashop
+  //si no hay nada en la sesión enviamos al login
   if (!$nombre_empleado){
-    echo '
-    <div class="jumbotron jumbotron_sesion">
-      <h1 class="display-4">Hola</h1>
-      <p class="lead">Tu sesión ha expirado o nunca se inició</p>
-      <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
-    </div>    
-    ';
+    $token = Tools::getAdminTokenLite('AdminModules');
+    $url_modulos = _MODULE_DIR_;
+
+    $url = $url_modulos.'pickpack/controllers/admin/procesos/pickpacklogin.php?token='.$token;  
+    //echo '<br>'.$url;
+    header("Location: $url");
+
+    // echo '
+    // <div class="jumbotron jumbotron_sesion">
+    //   <h1 class="display-4">Hola</h1>
+    //   <p class="lead">Tu sesión ha expirado o nunca se inició</p>
+    //   <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
+    // </div>    
+    // ';
   }else{
     //metemos el div con el formulario para buscar el pedido dentro del jumbotron para que en una sola pantalla salga todo y no tener que hacer ese scroll. También añado atributo autofocus al insert para que al cargar buscarPedido siempre se coloque el cursor ahí
     echo '
     <div class="jumbotron jumbotron_picking" style="padding-top:10px;">
-      <h1 class="display-4">Hola '.$nombre_empleado.'</h1>
+      <h1 class="display-4">Hola '.$nombre_empleado.'  
+          
+        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
+        <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+          <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
+        </ul>
+  
+      </h1>
       <p class="lead">Bienvenido a los pickings de La Frikilería</p>
       <div class="container" style="margin-bottom:20px;">  
         <form action="picking.php" method="post"> 
@@ -94,13 +118,21 @@ function buscarPedido()
 
 function mostrarPicking(){
   if (!$_SESSION["id_empleado"]){
-    echo '
-    <div class="jumbotron jumbotron_sesion">
-      <h1 class="display-4">Hola</h1>
-      <p class="lead">Tu sesión ha expirado o nunca se inició</p>
-      <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
-    </div>    
-    ';
+    //si no hay nombre guardado en sesión enviamos a login
+    $token = Tools::getAdminTokenLite('AdminModules');
+    $url_modulos = _MODULE_DIR_;
+
+    $url = $url_modulos.'pickpack/controllers/admin/procesos/pickpacklogin.php?token='.$token;  
+    //echo '<br>'.$url;
+    header("Location: $url");
+
+    // echo '
+    // <div class="jumbotron jumbotron_sesion">
+    //   <h1 class="display-4">Hola</h1>
+    //   <p class="lead">Tu sesión ha expirado o nunca se inició</p>
+    //   <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
+    // </div>    
+    // ';
   }else{
     $pedido = $_POST['id_pedido'];
 
@@ -227,7 +259,15 @@ function mostrarPicking(){
       //mostrar una pantalla de error con botón para volver
       echo '
       <div class="jumbotron jumbotron_picking">
-        <h1 class="display-4">Hola '.$nombre_empleado.'</h1>
+        <h1 class="display-4">Hola '.$nombre_empleado.'  
+          
+          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
+          <span class="caret"></span></button>
+          <ul class="dropdown-menu">
+            <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
+          </ul>
+    
+        </h1>
         <p class="lead">El pedido que buscas no está disponible para Picking</p>';
       if ($error_tracking){
         echo '<p class="lead">'.$error_tracking.'</p>';
@@ -336,7 +376,15 @@ function mostrarPicking(){
       //cabecera con datos de cliente
       echo '
       <div class="jumbotron jumbotron_picking">
-        <h1 class="display-4"><span style="font-size: 50%;">PICKING</span> <strong>'.$pedido.'</strong> <span style="font-size: 50%;">'.$fecha_pedido.'</span></h1>
+        <h1 class="display-4"><span style="font-size: 50%;">PICKING</span> <strong>'.$pedido.'</strong> <span style="font-size: 50%;">'.$fecha_pedido.'</span>  
+          
+          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
+          <span class="caret"></span></button>
+          <ul class="dropdown-menu">
+            <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
+          </ul>
+    
+        </h1>
         <h5><span style="font-size: 80%;">Estado Pick Pack actual</span> <strong>'.$estado_pickpack.'</strong></h5> 
         <div class="datos_cliente">
           <address>          
@@ -533,13 +581,21 @@ function procesaPicking(){
   $id_empleado = $_SESSION["id_empleado"];
   $nombre_empleado = $_SESSION["nombre_empleado"];
   if (!$id_empleado){
-    echo '
-    <div class="jumbotron jumbotron_sesion">
-      <h1 class="display-4">Hola</h1>
-      <p class="lead">Tu sesión ha expirado o nunca se inició</p>
-      <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
-    </div>    
-    ';
+    //si no hay id guardado en sesión enviamos a login
+    $token = Tools::getAdminTokenLite('AdminModules');
+    $url_modulos = _MODULE_DIR_;
+
+    $url = $url_modulos.'pickpack/controllers/admin/procesos/pickpacklogin.php?token='.$token;  
+    //echo '<br>'.$url;
+    header("Location: $url");
+
+    // echo '
+    // <div class="jumbotron jumbotron_sesion">
+    //   <h1 class="display-4">Hola</h1>
+    //   <p class="lead">Tu sesión ha expirado o nunca se inició</p>
+    //   <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
+    // </div>    
+    // ';
   }else{
     //sacamos los valores de radio button, textarea y regalo si los hay
     if(isset($_POST['submit_finpicking'])){
@@ -579,6 +635,8 @@ function procesaPicking(){
           if (!$correcto){
             $incidencia = 1;
             $incidencia_producto = ' ,incidencia_picking = 1 ';
+          } else {            
+            $incidencia_producto = ' ';
           }
           //Creamos la sql para hacer update de los productos en picking comprobando producto a producto si está en lafrips_pick_pack_productos (si el update da resultado) y si no lo está lo metemos con un insert, ya que puede darse el caso de que se cambie o añada algún producto si hay incidencia. 
           $sql_update_producto = 'UPDATE lafrips_pick_pack_productos 
@@ -672,7 +730,15 @@ function procesaPicking(){
       //mostrar una pantalla de error con botón para volver
       echo '
       <div class="jumbotron jumbotron_picking">
-        <h1 class="display-4">Hola '.$nombre_empleado.'</h1>
+        <h1 class="display-4">Hola '.$nombre_empleado.'  
+          
+          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
+          <span class="caret"></span></button>
+          <ul class="dropdown-menu">
+            <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
+          </ul>
+    
+        </h1>
         <p class="lead">Se ha producido un error</p>
       </div>
       <div class="container" style="margin-bottom:60px;">  

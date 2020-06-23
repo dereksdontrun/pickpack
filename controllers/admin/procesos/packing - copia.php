@@ -52,20 +52,11 @@ if (isset($_GET['id_empleado'])) {
 } elseif(isset($_POST['submit_volver'])){
   buscarPedido();
 } else {
-  //si no se capta nada enviamos a pickpacklogin
-  $token = Tools::getAdminTokenLite('AdminModules');
-  $url_modulos = _MODULE_DIR_;
-
-  //$url = $url_modulos.'pickpack/controllers/admin/procesos/picking.php?token='.$token.'&id_empleado='.$id_empleado;  
-  $url = $url_modulos.'pickpack/controllers/admin/procesos/pickpacklogin.php?token='.$token;  
-
-  header("Location: $url");
-
-  // echo '<div class="jumbotron jumbotron_sesion">
-  //   <h1 class="display-4">Hola</h1>
-  //   <p class="lead">Tu sesión ha expirado o nunca se inició</p>
-  //   <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
-  // </div>  ';
+  echo '<div class="jumbotron jumbotron_sesion">
+    <h1 class="display-4">Hola</h1>
+    <p class="lead">Tu sesión ha expirado o nunca se inició</p>
+    <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
+  </div>  ';
 }
 
 function buscarPedido()
@@ -91,15 +82,7 @@ function buscarPedido()
   }else{
     echo '
     <div class="jumbotron jumbotron_packing">
-      <h1 class="display-4">Hola '.$nombre_empleado.'    
-          
-        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
-        <span class="caret"></span></button>
-        <ul class="dropdown-menu">
-          <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
-        </ul>
-    
-      </h1>
+      <h1 class="display-4">Hola '.$nombre_empleado.'</h1>
       <p class="lead">Bienvenido a los packings de La Frikilería</p>
     </div>
     <div class="container" style="margin-bottom:60px;">  
@@ -261,15 +244,7 @@ function mostrarPacking(){
       //mostrar una pantalla de error con botón para volver
       echo '
       <div class="jumbotron jumbotron_packing">
-        <h1 class="display-4">Hola '.$nombre_empleado.'  
-            
-          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
-          <span class="caret"></span></button>
-          <ul class="dropdown-menu">
-            <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
-          </ul>
-      
-        </h1>
+        <h1 class="display-4">Hola '.$nombre_empleado.'</h1>
         <p class="lead">El pedido que buscas no existe o no está disponible para Packing</p>';
         if ($error_tracking){
           echo '<p class="lead">'.$error_tracking.'</p>';
@@ -413,18 +388,10 @@ function mostrarPacking(){
       $productos_pedido = Db::getInstance()->ExecuteS($sql_productos_pedido);  
 
       //mostramos los datos
-      //cabecera con datos de cliente, 19/06/2020 añadimos botón logout para usuario
+      //cabecera con datos de cliente
       echo '
       <div class="jumbotron jumbotron_packing">
-        <h1 class="display-4"><span style="font-size: 50%;">PACKING</span> <strong>'.$pedido.'</strong> <span style="font-size: 50%;">'.$fecha_pedido.'</span>  
-          
-            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
-            <span class="caret"></span></button>
-            <ul class="dropdown-menu">
-              <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
-            </ul>
-          
-        </h1>
+        <h1 class="display-4"><span style="font-size: 50%;">PACKING</span> <strong>'.$pedido.'</strong> <span style="font-size: 50%;">'.$fecha_pedido.'</span></h1>
         <h5><span style="font-size: 80%;">Estado Pick Pack actual</span> <strong>'.$estado_pickpack.'</strong></h5>';
         if ($empleado_picking && $empleado_picking !== ''){
           echo '<p class="empleado">Picking realizado por '.$empleado_picking.'</p>';
@@ -694,7 +661,7 @@ function procesaPacking(){
     //   <p class="lead">Tienes que acceder desde Prestashop, iniciando sesión en La Frikilería</p>
     // </div>    
     // ';
-  }else{ 
+  }else{
     //sacamos los valores de radio button, textarea y regalo si los hay
     if(isset($_POST['submit_finpacking'])){
       if ($_POST['id_pedido']){
@@ -737,8 +704,6 @@ function procesaPacking(){
           if (!$correcto){
             $incidencia = 1;
             $incidencia_producto = ' ,incidencia_packing = 1 ';
-          } else {            
-            $incidencia_producto = ' ';
           }
           //Creamos la sql para hacer update de los productos en packing comprobando producto a producto si está en lafrips_pick_pack_productos (si el update da resultado) y si no lo está lo metemos con un insert, ya que puede darse el caso de que se cambie o añada algún producto si hay incidencia. 
           $sql_update_producto = 'UPDATE lafrips_pick_pack_productos 
@@ -820,15 +785,7 @@ function procesaPacking(){
       //mostrar una pantalla de confirmación de envío de packing con botón para volver
       echo '
       <div class="jumbotron jumbotron_packing">
-        <h1 class="display-4">Gracias '.$nombre_empleado.'  
-          
-          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
-          <span class="caret"></span></button>
-          <ul class="dropdown-menu">
-            <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
-          </ul>
-      
-        </h1>
+        <h1 class="display-4">Gracias '.$nombre_empleado.'</h1>
         <p class="lead">El packing ha sido procesado</p>
       </div>
       <div class="container" style="margin-bottom:60px;">  
@@ -842,15 +799,7 @@ function procesaPacking(){
       //mostrar una pantalla de error con botón para volver
       echo '
       <div class="jumbotron jumbotron_packing">
-        <h1 class="display-4">Hola '.$nombre_empleado.'  
-            
-          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">'.$_SESSION["nombre_empleado"].'
-          <span class="caret"></span></button>
-          <ul class="dropdown-menu">
-            <li><a href="'._MODULE_DIR_.'pickpack/controllers/admin/procesos/pickpacklogin.php">  Cerrar Sesión</a></li>              
-          </ul>
-      
-        </h1>
+        <h1 class="display-4">Hola '.$nombre_empleado.'</h1>
         <p class="lead">Se ha producido un error</p>
       </div>
       <div class="container" style="margin-bottom:60px;">  

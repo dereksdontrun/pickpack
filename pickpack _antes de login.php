@@ -52,8 +52,8 @@ class Pickpack extends Module
         parent::__construct();
 
         //colocamos el link al módulo en la pestaña lateral de Pedidos        
-        $this->admin_tab[] = array('classname' => 'AdminPickPackLogin', 'parent' => 'AdminOrders', 'displayname' => 'Inicia PickPack');
-        //$this->admin_tab[] = array('classname' => 'AdminPacking', 'parent' => 'AdminOrders', 'displayname' => 'Packing');
+        $this->admin_tab[] = array('classname' => 'AdminPicking', 'parent' => 'AdminOrders', 'displayname' => 'Picking');
+        $this->admin_tab[] = array('classname' => 'AdminPacking', 'parent' => 'AdminOrders', 'displayname' => 'Packing');
         $this->admin_tab[] = array('classname' => 'AdminGestionPickpack', 'parent' => 'AdminOrders', 'displayname' => 'Gestión PickPack');
 
         $this->displayName = $this->l('Picking y Packing sin papel');

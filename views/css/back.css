@@ -132,3 +132,59 @@ blockquote.nota_cliente {
     background-color: #DC143C !important;
     color: black !important;
 }
+
+/* 18/06/2020 botones para escoger proceso */
+/* .jumbotron_login {    
+    background-color: #492365 !important;  
+    color: white;  
+} */
+
+.boton_packing {
+    font-size: 24px !important;
+    line-height: 1.33 !important;
+    border-radius: 6px !important;
+
+    color: #fff !important;
+    background-color: #32CD32 !important;
+    border-color: #28b928 !important;
+
+    box-shadow: 0 3px 0 0 #279b27 !important;
+
+    padding: 14px 24px;
+    border: 0 none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.boton_packing:active, .boton_packing.active {
+    background: #3ada3a !important;
+    box-shadow: none !important;
+    margin-bottom: -3px !important;
+    margin-top: 3px !important;
+}
+
+.boton_picking {
+    font-size: 24px !important;
+    line-height: 1.33 !important;
+    border-radius: 6px !important;
+
+    color: #fff !important;
+    background-color: #492365 !important;
+    border-color: #43235a !important;
+
+    box-shadow: 0 3px 0 0 #6f3797 !important;
+
+    padding: 14px 24px;
+    border: 0 none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.boton_picking:active, .boton_picking.active {
+    background: #662f8d !important;
+    box-shadow: none !important;
+    margin-bottom: -3px !important;
+    margin-top: 3px !important;
+}
