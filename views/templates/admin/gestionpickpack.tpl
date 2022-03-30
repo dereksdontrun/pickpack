@@ -74,7 +74,8 @@
             {/if}           
             <b>Pagado:</b> {$metodo_pago}<br>
             <b>Transporte:</b><br> <span class="badge badge-pill badge-info">{$transporte}</span><br>
-            <b>Estado:</b> {$estado_prestashop} <i>{$fecha_estado_prestashop|date_format:"%d-%m-%Y %H:%M:%S"}</i><br>
+            <b>Estado:</b> {$estado_prestashop} <i>{$fecha_estado_prestashop|date_format:"%d-%m-%Y %H:%M:%S"}</i><br>            
+            {if $pedido_dropshipping}<span class="badge badge-pill badge-warning">Contiene Dropshipping</span><br>{/if}
             <b>Envuelto para Regalo:</b> {if $regalo}<span class="badge badge-pill badge-danger">SI</span>{else}No{/if}<br> 
             {if $regalo}<b>Mensaje regalo:</b> 
               <blockquote>  
@@ -303,7 +304,11 @@
             {/if}            
             <div class="list-group-item"> 
               <h4 class="list-group-item-heading">Stock</h4>
-              <p class="list-group-item-text"><span style="font-size:12px;">Online ( {if !$producto['stock_online']}0{else}{$producto['stock_online']}{/if} ) - Tienda ( {if !$producto['stock_tienda']}0{else}{$producto['stock_tienda']}{/if} )</span></p> 
+              <p class="list-group-item-text">
+                <span style="font-size:12px;">Online ( {if !$producto['stock_online']}0{else}{$producto['stock_online']}{/if} ) - Tienda ( {if !$producto['stock_tienda']}0{else}{$producto['stock_tienda']}{/if} )</span>
+                {* metemos un mensaje indicando que el producto es dropshipping si lo es *}
+                {if $producto['dropshipping']}<span style="font-size: 150%;" class="badge badge-pill badge-warning">Dropshipping</span>{/if}
+              </p> 
             </div>    
           </div>
         </div>

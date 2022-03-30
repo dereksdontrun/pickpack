@@ -293,9 +293,11 @@ class AdminGestionPickpackController extends ModuleAdminController {
         $id_pedido = (int)$this->object->id_pickpack_order;
 
         //sacamos info del cliente y pedido, LEFT JOIN para state ya que muchos de amazon no tienen
+        //30/03/2022 añadimos campo para averiguar si el pedido está en lafrips_dropshipping e indicarlo en la vista
         $sql_info_pedido = "SELECT ord.id_customer AS id_cliente, CONCAT(cus.firstname,' ', cus.lastname) AS nombre_cliente, CONCAT(adr.address1,' ', adr.address2) AS direccion, adr.postcode AS codigo_postal, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ohi.date_add AS fecha_estado_prestashop, ord.module AS amazon,
         adr.city AS ciudad, sta.name AS provincia, col.name AS pais, ord.date_add AS fecha_pedido, car.name AS transporte, ord.gift AS regalo, 
-        ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2  
+        ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2,
+        IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping  
         FROM lafrips_customer cus
         JOIN lafrips_orders ord ON ord.id_customer = cus.id_customer
         JOIN lafrips_address adr ON ord.id_address_delivery = adr.id_address
@@ -327,6 +329,7 @@ class AdminGestionPickpackController extends ModuleAdminController {
         $regalo = $info_pedido[0]['regalo'];
         $mensaje_regalo = $info_pedido[0]['mensaje_regalo'];
         $nota_sobre_cliente = $info_pedido[0]['nota_sobre_cliente'];
+        $pedido_dropshipping = $info_pedido[0]['pedido_dropshipping'];
         if ($info_pedido[0]['tlfno1'] != "") {
             $telefono = $info_pedido[0]['tlfno1'];
         } else {
@@ -412,6 +415,7 @@ class AdminGestionPickpackController extends ModuleAdminController {
         }
    
         //info de productos en pedido, sacamos también si tuvo incidencia en picking y packing desde la tabla lafrips_pick_pack_productos
+        //30/03/2022 Añadimos left join a productos_vendidos_sin_stock para sacar si el producto era sin stock y dropshipping y poder mostrar un mensaje en la vista del contenido del pedido
         $sql_productos_pedido = "SELECT ode.product_id AS id_producto, ode.product_attribute_id AS id_atributo, ode.product_name AS nombre_completo,    
         ode.product_reference AS referencia_producto, ode.product_ean13 AS ean, ode.product_quantity AS cantidad, ode.unit_price_tax_incl AS precio_producto,  
         CONCAT( 'http://lafrikileria.com', '/', img.id_image, '-home_default/', 
@@ -436,7 +440,8 @@ class AdminGestionPickpackController extends ModuleAdminController {
         WHERE id_product = ode.product_id
         AND id_product_attribute = ode.product_attribute_id  
         AND id_warehouse = 4) AS 'stock_tienda',
-        ppp.ok_picking AS ok_picking, ppp.ok_packing AS ok_packing, ppp.incidencia_picking AS incidencia_picking, ppp.incidencia_packing AS incidencia_packing
+        ppp.ok_picking AS ok_picking, ppp.ok_packing AS ok_packing, ppp.incidencia_picking AS incidencia_picking, ppp.incidencia_packing AS incidencia_packing,
+        IFNULL(pvs.dropshipping, 0) AS dropshipping
         FROM lafrips_product pro      
         JOIN lafrips_order_detail ode ON pro.id_product = ode.product_id   
         JOIN lafrips_product_lang pla ON pla.id_product = ode.product_id AND pla.id_lang = 1  
@@ -445,6 +450,8 @@ class AdminGestionPickpackController extends ModuleAdminController {
         LEFT JOIN lafrips_warehouse_product_location wpl ON wpl.id_product = ode.product_id AND wpl.id_product_attribute = ode.product_attribute_id     
         LEFT JOIN lafrips_localizaciones loc ON loc.id_product = ode.product_id AND loc.id_product_attribute = ode.product_attribute_id
         LEFT JOIN lafrips_pick_pack_productos ppp ON ppp.id_pickpack_order = ode.id_order AND ppp.id_product = ode.product_id AND ppp.id_product_attribute = ode.product_attribute_id
+        LEFT JOIN lafrips_productos_vendidos_sin_stock pvs ON pvs.id_order = ode.id_order 
+			AND pvs.id_product = ode.product_id AND pvs.id_product_attribute = ode.product_attribute_id
         WHERE ode.id_order = ".$id_pedido." 
         AND wpl.id_warehouse = 1 
         GROUP BY ode.product_name
@@ -575,6 +582,7 @@ class AdminGestionPickpackController extends ModuleAdminController {
                 'url_tracking' => $url_tracking,
                 'seguimiento' => $seguimiento,
                 'caja_sorpresa' => $caja_sorpresa,
+                'pedido_dropshipping' => $pedido_dropshipping,
                 'token' => Tools::getAdminTokenLite('AdminGestionPickpack'),
                 'url_base' => Tools::getHttpHost(true).__PS_BASE_URI__.'lfadminia/',
             )
