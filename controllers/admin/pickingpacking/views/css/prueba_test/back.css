@@ -1,0 +1,286 @@
+/**
+* 2007-2020 PrestaShop
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Academic Free License (AFL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/afl-3.0.php
+* If you did not receive a copy of the license and are unable to
+* obtain it through the world-wide-web, please send an email
+* to license@prestashop.com so we can send you a copy immediately.
+*
+* DISCLAIMER
+*
+* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+* versions in the future. If you wish to customize PrestaShop for your
+* needs please refer to http://www.prestashop.com for more information.
+*
+*  @author    PrestaShop SA <contact@prestashop.com>
+*  @copyright 2007-2020 PrestaShop SA
+*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+*  International Registered Trademark & Property of PrestaShop SA
+*
+* Don't forget to prefix your containers with your own identifier
+* to avoid any conflicts with others containers.
+*/
+/* div.panel-footer {
+    padding: 20px !important;
+    height: 100% !important; 
+}
+
+.botones_pickpack {
+    width: 120px;
+} */
+
+.jumbotron_picking {
+    /* background-color: #c5b2e6 !important; */
+    background-color: #492365 !important;  
+    color: white;  
+}
+
+.jumbotron_packing {
+    /* background-color: #b8f8a0 !important;    */
+    background-color: #b5f72f !important; 
+}
+
+.jumbotron_error {
+    background-color: #ff0000 !important;  
+    color: white !important;  
+}
+
+.datos_cliente {
+    border-radius: 20px;
+    margin-left: 20px;
+    padding-left: 15px;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    background-color: white;  
+    color: black;
+}
+
+.container_productos {
+    padding: 20px;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-left: 10px;
+    margin-right: 5px;
+    /*background-color: #b8f8a0;*/
+}
+
+p.empleado {
+    font-style: italic;
+    padding-left: 20px;
+}
+
+blockquote.padquote {
+    padding-left: 20px;    
+}
+
+blockquote.nota_regalo {     
+    background-color: #c5b2e6;
+    font-size: x-large;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+blockquote.nota_cliente {     
+    background-color: #ee816d;
+    color: white;
+    font-size: large;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.badge-nocomenzado {
+    background-color: #e1ff59 !important;
+    color: black !important;
+}
+
+.badge-pickingabierto {
+    background-color: #32CD32 !important;
+    color: black !important;
+}
+
+.badge-incidenciapicking {
+    background-color: #FF8C00 !important;
+    color: black !important;
+}
+
+.badge-pickingfinalizado {
+    background-color: #bcb1ff !important;
+    color: black !important;
+}
+
+.badge-packingabierto {
+    background-color: #32cd97 !important;
+    color: black !important;
+}
+
+.badge-paqueteenviado {
+    background-color: #8A2BE2 !important;
+    color: black !important;
+}
+
+.badge-incidenciapacking {
+    background-color: #ffc334 !important;
+    color: black !important;
+}
+
+.badge-cancelado {
+    background-color: #DC143C !important;
+    color: black !important;
+}
+
+/* 18/06/2020 botones para escoger proceso */
+/* .jumbotron_login {    
+    background-color: #492365 !important;  
+    color: white;  
+} */
+
+.boton_packing {
+    font-size: 24px !important;
+    line-height: 1.33 !important;
+    border-radius: 6px !important;
+
+    color: #fff !important;
+    background-color: #32CD32 !important;
+    border-color: #28b928 !important;
+
+    box-shadow: 0 3px 0 0 #279b27 !important;
+
+    padding: 14px 24px;
+    border: 0 none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.boton_packing:active, .boton_packing.active {
+    background: #3ada3a !important;
+    box-shadow: none !important;
+    margin-bottom: -3px !important;
+    margin-top: 3px !important;
+}
+
+.boton_picking {
+    font-size: 24px !important;
+    line-height: 1.33 !important;
+    border-radius: 6px !important;
+
+    color: #fff !important;
+    background-color: #492365 !important;
+    border-color: #43235a !important;
+
+    box-shadow: 0 3px 0 0 #6f3797 !important;
+
+    padding: 14px 24px;
+    border: 0 none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.boton_picking:active, .boton_picking.active {
+    background: #662f8d !important;
+    box-shadow: none !important;
+    margin-bottom: -3px !important;
+    margin-top: 3px !important;
+}
+
+.mayusculas {
+    text-transform: uppercase;
+}
+
+/* Color de fondo para distinguir productos de diferentes cajas */
+.cajaA {
+    background: #b2acc8 !important;    
+}
+.cajaB {
+    background: #e2eec6 !important;    
+}
+
+/* CSS para el input sticky flotante del packing donde se introducirán los ean para comprobar si el producto está en el pedido */
+.sticky_ean {
+    position: -webkit-sticky;
+    position: sticky;
+    /* top: 0; */
+    background-color: white;
+    /* padding: 5px; */
+    padding-left: 18px;
+    /*bottom: 1rem;*/
+    bottom: 0px;
+    /* align-self: flex-end; */
+    /* font-size: 20px; */
+    display: inline-block;
+}
+
+#submit_sticky_form_ean {    
+    margin-left: -1px; /* para quitar espacio entre input y submit */
+}
+
+#input_ean {    
+    margin-right: -4px; /* para quitar espacio entre input y submit */
+}
+
+#span_warning_radio_button {
+    height: 50px;
+    /* width: 100%; */
+}
+
+/* css para los divs que muestran un breve mensaje de success, danger o warning cada vez que se escanea un ean , están con el sticky ean justo sobre el input para introducir el ean */
+/* #sticky_producto_escaneado { */
+    /* position: -webkit-sticky; */
+    /* position: sticky; */
+    /* top: 0; */
+    /* background-color: white; */
+    /* padding: 5px; */
+    /*bottom: 1rem;*/
+    /* bottom: 20px; */
+    /* align-self: flex-end; */
+    /* font-size: 20px; */
+    /* display: inline-block; */
+/* } */
+
+#sticky_producto_escaneado {    
+    padding: 5px;    
+    text-align:center;
+    font-weight: bold;
+    border: 1px solid black;
+    border-radius: 5px;
+    display: inline-block;
+}
+ 
+#escaneo_success {
+    background-color: #28a745;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    width: 220px;
+}
+
+#escaneo_danger {
+    background-color: #c82333;
+    color: white;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    width: 220px;
+}
+
+#escaneo_warning_faltan {
+    background-color: #f79c13;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    width: 220px;
+}
+
+#escaneo_warning_sobran {
+    background-color: yellow;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    width: 220px;
+}

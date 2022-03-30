@@ -172,14 +172,18 @@ class AdminGestionPickpackController extends ModuleAdminController {
             //     'orderby' => false,
             // ),
         );
-        //$this->actions = array('view', 'delete');
         $this->actions = array('view');
+        //$this->actions = array('view');
+        //15/09/2020 Añadimos otra acción que nos permita ir al pedido en admin orders desde aquí, y si existe tracking para el pedido, otra acción para ir directamente al seguimiento
+        // $this->addRowAction('view'); 
+        $this->addRowAction('verpedido');
+        $this->addRowAction('seguimiento'); 
 
         //añadimos posibilidad de cambiar estado de pickpack a varios pedidos a la vez. Dos botones, uno para pasar a Picking finalizado y otro apacking finalizado -> Pauqete enviado
         $this->bulk_actions = array(
             'updateIdEstadoOrderFinPicking' => array('text' => $this->l('Cambiar Estado a Picking Finalizado'), 'icon' => 'icon-refresh'),
             'updateIdEstadoOrderFinPacking' => array('text' => $this->l('Cambiar Estado a Paquete Enviado'), 'icon' => 'icon-refresh'),
-        );        
+        );     
 
         parent::__construct();
     }
@@ -192,6 +196,95 @@ class AdminGestionPickpackController extends ModuleAdminController {
         $this->addJs($this->module->getPathUri().'views/js/back.js');
         //añadimos la dirección para el css
         $this->addCss($this->module->getPathUri().'views/css/back.css');
+    }
+
+    //añadimos esta función para gestionar el botón acción añadido al controlador para ir directamente al pedido en admin orders vieworder
+    public function displayVerpedidoLink($token = null, $id, $name = null)
+    {
+        // $token will contain token variable
+        // $id will hold id_identifier value
+        // $name will hold display name
+
+        //generamos el destino del link, el pedido en admin orders. Para ello, a partir de $id, que es el id_pickpack de la tabla lafrips_pickpack, sacamos el id_pickpack_order   
+        //instanciamos el pedido pickpack
+        $pickpack_order = new PickPackOrder((int)$id); 
+        $id_order = $pickpack_order->id_pickpack_order;
+        //https://lafrikileria.com/lfadminia/index.php?controller=AdminOrders&token=b192540700c383eeb6b26f1da43998da&id_order=225726&vieworder
+        $token_adminorders = Tools::getAdminTokenLite('AdminOrders');
+        $url_base = Tools::getHttpHost(true).__PS_BASE_URI__;
+        $href = $url_base.'lfadminia/index.php?controller=AdminOrders&token='.$token_adminorders.'&id_order='.$id_order.'&vieworder';
+
+        //hay que crear esta plantilla para el botón
+        //$tpl = $this->createTemplate('helpers/list/list_action_verpedido.tpl'); 
+        //me daba problemas así que usamos esta forma de createTemplate con la url absoluta
+        $tpl = $this->context->smarty->createTemplate(_PS_MODULE_DIR_.'pickpack/views/templates/admin/pick_pack/helpers/list/list_action_verpedido.tpl'); 
+        
+        $tpl->assign(array(
+            'id' => $id,
+            'href' => $href,        
+            'action' => 'Ir a pedido'
+        ));
+        return $tpl->fetch();
+    }
+
+    //para el botón acción que envía al seguimeinto si hay tracking
+    public function displaySeguimientoLink($token = null, $id, $name = null)
+    {
+        // $token will contain token variable
+        // $id will hold id_identifier value
+        // $name will hold display name
+
+        //generamos el destino del link, el seguimiento del pedido si existe tracking. Para ello, a partir de $id, que es el id_pickpack de la tabla lafrips_pickpack, sacamos el id_pickpack_order, desde ahí el transportista y si hay tracking, dependiendo de este sacamos la url  
+        //instanciamos el pedido pickpack
+        $pickpack_order = new PickPackOrder((int)$id); 
+        $id_order = $pickpack_order->id_pickpack_order;
+
+        $sql_tracking = 'SELECT car.name AS name, oca.tracking_number AS tracking
+        FROM lafrips_order_carrier oca
+        JOIN lafrips_carrier car ON car.id_carrier = oca.id_carrier
+        WHERE id_order = '.$id_order;
+        $tracking = Db::getInstance()->ExecuteS($sql_tracking);
+
+        if ($tracking) {            
+            $transportista = $tracking[0]['name'];
+            $tracking = $tracking[0]['tracking'];
+            //si hay número de tracking montamos la url del seguimiento según el transportista, al cual diferenciamos por nombre ya que el id puede cambiar si se elimina y crea el transporte, etc. Habría que actualizarlo con nuevos transportistas
+            if (preg_match('/GLS/i',$transportista )) {
+                //si es GLS buscamos la url en la tabla lafrips_asm_envios
+                $sql_tracking_gls = 'SELECT url_track FROM lafrips_asm_envios WHERE codigo_envio = "'.$tracking.'" AND id_envio_order = '.$id_order;
+                $url_tracking = Db::getInstance()->ExecuteS($sql_tracking_gls)[0]['url_track'];
+            } elseif (preg_match('/correos/i',$transportista ) && preg_match('/^((?!expres).)*$/i',$transportista )) {
+                //si el nombre contiene correos pero no express
+                //la url de seguiimiento para correos es tal que http://www.correos.es/comun/localizador/track.asp?numero=PS4S2T0720500920110800Q
+                $url_tracking = 'http://www.correos.es/comun/localizador/track.asp?numero='.$tracking;
+            } elseif (preg_match('/spring/i',$transportista )) {
+                //si el nombre contiene spring 
+                //la url de seguimiento para spring es tal que https://mailingtechnology.com/tracking/?tn=3SDOKC0476849
+                $url_tracking = 'https://mailingtechnology.com/tracking/?tn='.$tracking;
+            } else { //mientras no utilicemos otros transportistas queda así
+                $url_tracking = '';
+            }
+        }
+
+        if ($url_tracking && $url_tracking != '') {
+            $href = $url_tracking;
+            $seguimiento = 1;
+        } else {
+            $href = '';
+            $seguimiento = 0;
+        }
+
+        //hay que crear esta plantilla para el botón        
+        //me daba problemas así que usamos esta forma de createTemplate con la url absoluta
+        $tpl = $this->context->smarty->createTemplate(_PS_MODULE_DIR_.'pickpack/views/templates/admin/pick_pack/helpers/list/list_action_seguimiento.tpl'); 
+        
+        $tpl->assign(array(
+            'id' => $id,
+            'href' => $href, 
+            'seguimiento' => $seguimiento,      
+            'action' => 'Seguimiento'
+        ));
+        return $tpl->fetch();
     }
 
     public function renderView(){
@@ -254,6 +347,9 @@ class AdminGestionPickpackController extends ModuleAdminController {
             $amazon_marketplace = '';
             $amazon_id = 0;
         }
+
+        //obtenemos el campo caja_sorpresa almacenado al crear el pickpack del pedido y que indica si contiene caja sorpresa
+        $caja_sorpresa = (int)$this->object->caja_sorpresa;
 
         // Número de pedidos del cliente
         $sql_numero_pedidos = "SELECT COUNT(id_order) AS num_pedidos FROM lafrips_orders WHERE id_customer = ".$id_cliente." AND valid = 1;";
@@ -360,7 +456,83 @@ class AdminGestionPickpackController extends ModuleAdminController {
         $sql_pickpack_estados = 'SELECT id_pickpack_estados, nombre_estado, color FROM lafrips_pick_pack_estados;';
         $pickpack_estados = Db::getInstance()->ExecuteS($sql_pickpack_estados);
 
-            
+        //queremos mostrar en gestion pickpack cuales son las cajas sorpresa, si las hay, que corresponden al pedido padre. Buscamos el id_order en frik_cajas_sorpresa y si saca resultados guardamos tanto el id del pedido que contiene la caja, como su nombre de caja completo y el mensaje del cliente para mostrarlo en la visión del pedido pickpack
+        $sql_pedidos_cajas = 'SELECT id_order_caja, id_customization, id_product, id_product_attribute 
+        FROM frik_cajas_sorpresa
+        WHERE id_order = '.$id_pedido;
+        $pedidos_cajas = Db::getInstance()->ExecuteS($sql_pedidos_cajas);
+
+        $mensajes_cliente_cajas = array();
+
+        if (count($pedidos_cajas) > 0) {
+            foreach ($pedidos_cajas AS $pedido_caja) {
+                //obtenemos el nombre completo de la caja vendida en la tabla order_detail
+                $sql_nombre_caja = 'SELECT product_name FROM lafrips_order_detail 
+                WHERE id_order = '.$id_pedido.'
+                AND product_id = '.$pedido_caja['id_product'].'
+                AND product_attribute_id = '.$pedido_caja['id_product_attribute'];
+                
+                if (Db::getInstance()->ExecuteS($sql_nombre_caja)) {
+                    $nombre_caja = '<b>'.Db::getInstance()->ExecuteS($sql_nombre_caja)[0]['product_name'].'</b><br><br>'; 
+                } else {
+                    $nombre_caja = ''; 
+                }    
+
+                $id_customization_caja_sorpresa = $pedido_caja['id_customization'];
+
+                //buscamos el mensaje de cliente
+                $sql_mensaje_cliente_caja = 'SELECT value FROM lafrips_customized_data
+                WHERE id_customization = '.$id_customization_caja_sorpresa;
+                if ($mensaje_cliente_caja = Db::getInstance()->ExecuteS($sql_mensaje_cliente_caja)) {
+                    $mensaje = $nombre_caja.$mensaje_cliente_caja[0]['value'];
+                } else {
+                    $mensaje = 'Error con mensaje de cliente / No hay mensaje';
+                }
+
+                $mensajes_cliente_cajas[$pedido_caja['id_order_caja']] = $mensaje;
+            }            
+        }     
+        
+        //15/09/2020 queremos añadir un enlace al pedido en admin orders
+        //https://lafrikileria.com/lfadminia/index.php?controller=AdminOrders&token=b192540700c383eeb6b26f1da43998da&id_order=225726&vieworder
+        $token_adminorders = Tools::getAdminTokenLite('AdminOrders');
+        $url_base = Tools::getHttpHost(true).__PS_BASE_URI__;
+        $url_pedido = $url_base.'lfadminia/index.php?controller=AdminOrders&token='.$token_adminorders.'&id_order='.$id_pedido.'&vieworder';
+
+        //queremos añadir enlace a seguimiento si lo hay
+        $sql_tracking = 'SELECT car.name AS name, oca.tracking_number AS tracking
+        FROM lafrips_order_carrier oca
+        JOIN lafrips_carrier car ON car.id_carrier = oca.id_carrier
+        WHERE id_order = '.$id_pedido;
+        $tracking = Db::getInstance()->ExecuteS($sql_tracking);
+
+        if ($tracking) {            
+            $nombre_transportista = $tracking[0]['name'];
+            $tracking = $tracking[0]['tracking'];
+            //si hay número de tracking montamos la url del seguimiento según el transportista, al cual diferenciamos por nombre ya que el id puede cambiar si se elimina y crea el transporte, etc. Habría que actualizarlo con nuevos transportistas
+            if (preg_match('/GLS/i',$nombre_transportista )) {
+                //si es GLS buscamos la url en la tabla lafrips_asm_envios - 23/02/2021 cambiada tabla a gls_envios
+                $sql_tracking_gls = 'SELECT url_track FROM lafrips_gls_envios WHERE codigo_envio = "'.$tracking.'" AND id_envio_order = '.$id_pedido;
+                $url_tracking = Db::getInstance()->ExecuteS($sql_tracking_gls)[0]['url_track'];
+            } elseif (preg_match('/correos/i',$nombre_transportista ) && preg_match('/^((?!expres).)*$/i',$nombre_transportista )) {
+                //si el nombre contiene correos pero no express
+                //la url de seguiimiento para correos es tal que http://www.correos.es/comun/localizador/track.asp?numero=PS4S2T0720500920110800Q
+                $url_tracking = 'http://www.correos.es/comun/localizador/track.asp?numero='.$tracking;
+            } elseif (preg_match('/spring/i',$nombre_transportista )) {
+                //si el nombre contiene spring 
+                //la url de seguimiento para spring es tal que https://mailingtechnology.com/tracking/?tn=3SDOKC0476849
+                $url_tracking = 'https://mailingtechnology.com/tracking/?tn='.$tracking;
+            } else { //mientras no utilicemos otros transportistas queda así
+                $url_tracking = '';
+            }
+        }
+
+        if ($url_tracking && $url_tracking != '') {            
+            $seguimiento = 1;
+        } else {
+            $url_tracking = '';
+            $seguimiento = 0;
+        }
 
         //asignamos la plantilla packing a esta vista
         $tpl = $this->context->smarty->createTemplate(dirname(__FILE__).'/../../views/templates/admin/gestionpickpack.tpl');
@@ -398,6 +570,11 @@ class AdminGestionPickpackController extends ModuleAdminController {
                 'todos_mensajes_pedido' => $todos_mensajes_pedido,
                 'productos_pedido' => $productos_pedido,
                 'pickpack_estados' => $pickpack_estados,
+                'mensajes_cliente_cajas' => $mensajes_cliente_cajas,
+                'url_pedido' => $url_pedido,
+                'url_tracking' => $url_tracking,
+                'seguimiento' => $seguimiento,
+                'caja_sorpresa' => $caja_sorpresa,
                 'token' => Tools::getAdminTokenLite('AdminGestionPickpack'),
                 'url_base' => Tools::getHttpHost(true).__PS_BASE_URI__.'lfadminia/',
             )
@@ -508,6 +685,56 @@ class AdminGestionPickpackController extends ModuleAdminController {
                         if (!$ejecucion){
                             $this->errors[] = sprintf(Tools::displayError('No se pudo cambiar el estado del pedido #%d'), $pickpack_order->id_pickpack_order);
                         } else {
+                            //23/02/2021 Si el cambio ha sido a Paquete Enviado (Packing finalizado) queremos introducir el pedido en la tabla de cambios de estado automáticos para pasarlo a enviado (y enviar email de seguimiento si es GLS)
+                            //01/03/2021 Si es de ClickCanarias lo ignoramos para el cambio, y si es virtual, lo marcamos para pasar a entregado en lugar de enviado
+                            if ($id_nuevo_estado == 6){ 
+                                //primero nos aseguramos de que el pedido no esté en estado Enviado, Cancelado, Entregado, Error pago , virtual(cajas)       
+                                $id_estado_enviado = (int)Configuration::get(PS_OS_SHIPPING);
+                                $id_estado_entregado = (int)Configuration::get(PS_OS_DELIVERED);
+                                $id_estado_cancelado = (int)Configuration::get(PS_OS_CANCELED);
+                                $id_estado_errorpago = (int)Configuration::get(PS_OS_ERROR);
+                                $id_estado_canarias = (int)Configuration::get(CLICKCANARIAS_STATE);
+                                //sacamos id_status de Pedido virtual
+                                $sql_id_pedido_virtual = "SELECT ost.id_order_state as id_pedido_virtual
+                                FROM lafrips_order_state ost
+                                JOIN lafrips_order_state_lang osl ON osl.id_order_state = ost.id_order_state AND osl.id_lang = 1
+                                WHERE osl.name = 'Pedido Virtual'
+                                AND ost.deleted = 0";
+                                $id_pedido_virtual = (int)Db::getInstance()->executeS($sql_id_pedido_virtual)[0]['id_pedido_virtual'];
+
+                                //sacamos id_status de Pendiente envío fuera península.
+                                $sql_id_pendiente_fuera = "SELECT ost.id_order_state as id_pendiente_fuera
+                                FROM lafrips_order_state ost
+                                JOIN lafrips_order_state_lang osl ON osl.id_order_state = ost.id_order_state AND osl.id_lang = 1
+                                WHERE osl.name = 'Pendiente envío fuera península.'
+                                AND ost.deleted = 0";
+                                $id_pendiente_fuera = (int)Db::getInstance()->executeS($sql_id_pendiente_fuera)[0]['id_pendiente_fuera'];
+
+                                //instanciamos pedido
+                                $order = new Order($id_pedido);
+                                $current_state = (int)$order->current_state;
+                                
+                                //si el estado actual no es Enviado, Cancelado, Entregado, Error pago, canarias, o si es virtual enviamos a la tabla. Si es virtual lo pasaremos a entregado
+                                if (($current_state !== $id_estado_enviado) && ($current_state !== $id_estado_entregado) && ($current_state !== $id_estado_cancelado) && ($current_state !== $id_estado_errorpago) && ($current_state !== $id_estado_canarias) && ($current_state !== $id_pendiente_fuera) || ($current_state == $id_pedido_virtual)) {
+                                    if ($current_state == $id_pedido_virtual) {
+                                        $cambio = 'entregado';
+                                    } else {
+                                        $cambio = 'enviado';
+                                    }
+                                    //usamos esta sql para asegurarnos de no insertar duplicados de un order si por lo que sea se cierra un packing varias veces
+                                    $insert_frik_cambio_enviado = "INSERT INTO frik_cambio_enviado 
+                                        (cambio, id_order, id_order_status, id_empleado, date_add) 
+                                        SELECT '".$cambio."',
+                                        ".$id_pedido." ,
+                                        ".$current_state." ,				
+                                        ".$id_empleado." ,             
+                                        NOW()
+                                        FROM dual
+                                        WHERE NOT EXISTS (SELECT id_order FROM frik_cambio_enviado WHERE id_order = ".$id_pedido.")LIMIT 1";
+
+                                    Db::getInstance()->Execute($insert_frik_cambio_enviado);
+                                }
+                            }
                             //si el cambio tiene exito redirigimos a la url del pedido pickpack con una variable get success=1 en la url, que se sacará si está mediante smarty para mostrar mensaje desde tpl
                             $token = Tools::getAdminTokenLite('AdminGestionPickpack');
                             $url_base = Tools::getHttpHost(true).__PS_BASE_URI__.'lfadminia/';
@@ -703,7 +930,59 @@ class AdminGestionPickpackController extends ModuleAdminController {
                         $ejecucion = Db::getInstance()->execute($sql_update_pickpack_estado_pedido);
                         if (!$ejecucion){
                             $this->errors[] = sprintf(Tools::displayError('No se pudo cambiar el estado del pedido #%d'), $pickpack_order->id_pickpack_order);
-                        }               
+                        } else {
+                            //23/02/2021 Si el cambio ha sido a Paquete Enviado (Packing finalizado) queremos introducir el pedido en la tabla de cambios de estado automáticos para pasarlo a enviado (y enviar email de seguimiento si es GLS)
+                            //01/03/2021 Si es de ClickCanarias lo ignoramos para el cambio, y si es virtual, lo marcamos para pasar a entregado en lugar de enviado                             
+                            //primero nos aseguramos de que el pedido no esté en estado Enviado, Cancelado, Entregado, Error pago, virtual(cajas), los pedidos de ClickCanarias, estados "Pendiente envío fuera península." y "Pagado con ClickCanarias"            
+                            $id_estado_enviado = (int)Configuration::get(PS_OS_SHIPPING);
+                            $id_estado_entregado = (int)Configuration::get(PS_OS_DELIVERED);
+                            $id_estado_cancelado = (int)Configuration::get(PS_OS_CANCELED);
+                            $id_estado_errorpago = (int)Configuration::get(PS_OS_ERROR);
+                            $id_estado_canarias = (int)Configuration::get(CLICKCANARIAS_STATE);
+                            //sacamos id_status de Pedido virtual
+                            $sql_id_pedido_virtual = "SELECT ost.id_order_state as id_pedido_virtual
+                            FROM lafrips_order_state ost
+                            JOIN lafrips_order_state_lang osl ON osl.id_order_state = ost.id_order_state AND osl.id_lang = 1
+                            WHERE osl.name = 'Pedido Virtual'
+                            AND ost.deleted = 0";
+                            $id_pedido_virtual = (int)Db::getInstance()->executeS($sql_id_pedido_virtual)[0]['id_pedido_virtual'];
+
+                            //sacamos id_status de Pendiente envío fuera península.
+                            $sql_id_pendiente_fuera = "SELECT ost.id_order_state as id_pendiente_fuera
+                            FROM lafrips_order_state ost
+                            JOIN lafrips_order_state_lang osl ON osl.id_order_state = ost.id_order_state AND osl.id_lang = 1
+                            WHERE osl.name = 'Pendiente envío fuera península.'
+                            AND ost.deleted = 0";
+                            $id_pendiente_fuera = (int)Db::getInstance()->executeS($sql_id_pendiente_fuera)[0]['id_pendiente_fuera'];
+
+                            //instanciamos pedido
+                            $id_pedido = $pickpack_order->id_pickpack_order;
+                            $order = new Order($id_pedido);
+                            $current_state = (int)$order->current_state;
+                            
+                            //si el estado actual no es Enviado, Cancelado, Entregado, Error pago, enviamos a la tabla
+                            //añadimos virtual y los de Canarias
+                            if (($current_state !== $id_estado_enviado) && ($current_state !== $id_estado_entregado) && ($current_state !== $id_estado_cancelado) && ($current_state !== $id_estado_errorpago) && ($current_state !== $id_estado_canarias) && ($current_state !== $id_pendiente_fuera) || ($current_state == $id_pedido_virtual)) {
+                                if ($current_state == $id_pedido_virtual) {
+                                    $cambio = 'entregado';
+                                } else {
+                                    $cambio = 'enviado';
+                                }
+                                //usamos esta sql para asegurarnos de no insertar duplicados de un order si por lo que sea se cierra un packing varias veces
+                                $insert_frik_cambio_enviado = "INSERT INTO frik_cambio_enviado 
+                                    (cambio, id_order, id_order_status, id_empleado, date_add) 
+                                    SELECT '".$cambio."',
+                                    ".$id_pedido." ,
+                                    ".$current_state." ,				
+                                    ".$id_empleado." ,             
+                                    NOW()
+                                    FROM dual
+                                    WHERE NOT EXISTS (SELECT id_order FROM frik_cambio_enviado WHERE id_order = ".$id_pedido.")LIMIT 1";
+
+                                Db::getInstance()->Execute($insert_frik_cambio_enviado);
+                                
+                            }
+                        }              
                     }
                 }
             }

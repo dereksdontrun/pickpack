@@ -26,7 +26,7 @@
   
   {*Panel con información del pedido y el cliente *}
   <div class="panel clearfix">
-    <h3>Hola {Context::getContext()->employee->firstname} - Información del pedido <span style="font-size: 150%;"><strong>{$idpedido}</strong></span> del {$fecha_pedido}</h3>
+    <h3>Hola {Context::getContext()->employee->firstname} - Información del pedido <span style="font-size: 150%;"><strong><a href="{$url_pedido}" target="_blank" title="Ver Pedido" class="link_order">{$idpedido}</a></strong></span> del {$fecha_pedido} {if $seguimiento}<span style="font-size: 150%;"><strong><a href="{$url_tracking}" target="_blank" title="Ver Seguimiento" class="link_order"> Tracking</a></strong></span>{/if} {if $caja_sorpresa}<span class="badge badge-pill badge-warning">Contiene Caja Sorpresa</span>{/if}</h3>
 
     {* Para mostrar el estado buscamos en el array de pickpack_estados la posición de estado pickpack menos 1, ya que el array empieza desde 0, y sacamos el nombre y la clase para el badge de bootstrap, que hemos creado los colores en el css back.css. El nombre lo sacamos uniendo el nombre de estado y pasando a minúsculas *}
     {$estado_pickpack = $pickpack_estados[($objeto_pick_pack->id_estado_order - 1)]['nombre_estado'] }
@@ -103,6 +103,23 @@
       
     </div>
   </div>
+
+  {*Panel con información sobre cajas sorpresa, si las hay *}
+  {if $mensajes_cliente_cajas}
+  <div class="panel clearfix">
+    <h3>Cajas Sorpresa</h3>            
+    <div class="panel col-md-8">      
+        <div class="list-group">
+          {foreach from=$mensajes_cliente_cajas key=cabecera item=mensaje }
+            <div class="list-group-item">        
+              <h4 class="list-group-item-heading">{$cabecera}</h4>
+              <blockquote><p class="list-group-item-text">{$mensaje}</p></blockquote>
+            </div>
+          {/foreach}
+        </div>         
+    </div>      
+  </div>
+  {/if} 
 
   {* panel con el formulario para cambiar de estado el pedido pickpack *}
   {* $smarty.get.token también recoge el token del controlador sin necesidad de tarerlo como variable *}

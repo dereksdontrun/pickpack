@@ -60,9 +60,9 @@ class Pickpack extends Module
         $this->description = $this->l('Módulo que permite hacer picking y packing sin necesidad de imprimir las hojas de pedido');
 
         $this->confirmUninstall = $this->l('¿Quieres desinstalar este módulo?');
-        //creamos la variable para javascript con la url del módulo
-        Media::addJsDef(array('url_base' => $this->_path));        
-        Media::addJsDef(array('id_employee' => Context::getContext()->employee->id));        
+        //creamos la variable para javascript con la url del módulo. No se utiliza- OJO, al genrar así las variables quedan como variables globales y se accede a ellas desde cualquier parte del front
+        // Media::addJsDef(array('url_base' => $this->_path));        
+        // Media::addJsDef(array('id_employee' => Context::getContext()->employee->id));        
 
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
     }
@@ -309,13 +309,14 @@ class Pickpack extends Module
                 `comentario_packing` varchar(2000) NOT NULL,
                 `regalo` tinyint(1) NOT NULL,
                 `obsequio` tinyint(1) NOT NULL,
+                `caja_sorpresa` int(10) NOT NULL,
                 `finalizado` tinyint(1) NOT NULL,
                 `comenzado_picking` tinyint(1) NOT NULL,
                 `comenzado_packing` tinyint(1) NOT NULL,
                 `incidencia_picking` tinyint(1) NOT NULL,  
                 `incidencia_packing` tinyint(1) NOT NULL, 
                 `picking_finalizado_bulk` tinyint(1) NOT NULL,
-                `packing_finalizado_bulk` tinyint(1) NOT NULL,                    
+                `packing_finalizado_bulk` tinyint(1) NOT NULL,                                   
                 `date_add` datetime NOT NULL,
                 `date_inicio_picking` datetime NOT NULL,
                 `date_fin_picking` datetime NOT NULL,
@@ -397,18 +398,30 @@ class Pickpack extends Module
                 //$order_pickpack->comentario_picking = 'comentarion';
                 $order_pickpack->id_estado_order = 1;
                 //$order_pickpack->date_fin_picking = date("Y-m-d H:i:s");    //campos date_add y date_upd se llenan automáticamente            
-                $order_pickpack->add();
+                
 
                 //ahora obtenemos los productos que hay en el pedido y los metemos en la tabla lafrips_pick_pack_productos
                 //con el id sacamos los productos del pedido
                 $pedido = new Order($id_order);
-                $productos = $pedido->getProducts();                
+                $productos = $pedido->getProducts();   
+                $caja = 0;             
                 //sacamos el id e id_product_attribute de cada producto en el pedido y los metemos en la tabla
                 foreach ($productos as $producto){
                     $id_producto = $producto['product_id'];
+                    //comprobamos si hay alguna caja sorpresa en el pedido
+                    if ($id_producto == 5344) {
+                        $caja = 1;
+                    }
                     $id_atributo_producto = $producto['product_attribute_id'];
-                    Db::getInstance()->Execute("INSERT INTO lafrips_pick_pack_productos (id_pickpack_order, id_product, id_product_attribute) VALUES (".$id_order." ,".$id_producto." ,".$id_atributo_producto.")");
+                    Db::getInstance()->Execute("INSERT INTO lafrips_pick_pack_productos (id_pickpack_order, id_product, id_product_attribute) VALUES (".$id_order." ,".$id_producto." ,".$id_atributo_producto.")");                    
                 }
+
+                //23/11/2020 Si en el pedido hay alguna caja sorpresa id 5344 ponemos a la varable de pickpack caja_sorpresa valor 1
+                if ($caja) {
+                    $order_pickpack->caja_sorpresa = 1;
+                }                
+
+                $order_pickpack->add();
 
                 return;
             }

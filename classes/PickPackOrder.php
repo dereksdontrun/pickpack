@@ -181,6 +181,14 @@ class PickPackOrder extends ObjectModel
      * @var bool
      */
     public $packing_finalizado_bulk;
+
+    //23/11/2020 Añado variable ara saber si el pedido contiene una caja sorpresa (vale 1) o es una caja sorpresa (vale 2)
+    /**
+     * caja sorpresa
+     *
+     * @var int
+     */
+    public $caja_sorpresa;
     
 
     /**
@@ -216,6 +224,7 @@ class PickPackOrder extends ObjectModel
             'incidencia_packing' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
             'picking_finalizado_bulk' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
             'packing_finalizado_bulk' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
+            'caja_sorpresa' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
         ),
     );
 

@@ -30,7 +30,9 @@ class AdminPickPackLoginController extends ModuleAdminController {
     $url_modulos = _MODULE_DIR_;
 
     //$url = $url_modulos.'pickpack/controllers/admin/procesos/picking.php?token='.$token.'&id_empleado='.$id_empleado;  
-    $url = $url_modulos.'pickpack/controllers/admin/procesos/pickpacklogin.php?token='.$token;  
+    //$url = $url_modulos.'pickpack/controllers/admin/procesos/pickpacklogin.php?token='.$token;  
+
+    $url = $url_modulos.'pickpack/controllers/admin/pickingpacking/pickpackindex.php?token='.$token;
 
     header("Location: $url");
   }
