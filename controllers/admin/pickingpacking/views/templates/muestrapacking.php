@@ -42,6 +42,9 @@ include('header.php');
         </div> </br>
         <div class="panel datos_cliente col-md-4">
             <b>Pagado:</b> <?= $metodo_pago ?><br>
+            <?php if ($pedido_dropshipping){ ?>
+            <h3><span class="badge badge-pill badge-warning">Contiene Dropshipping</span></h3>
+            <?php } ?>
             <?php if ($amazon){ ?>
             <h3><span class="badge badge-pill badge-info">AMAZON</span></h3>
             <?php } ?>       

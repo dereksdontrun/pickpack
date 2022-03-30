@@ -156,9 +156,11 @@ function infoOrder($pedido){
   //JOIN a tabla pick_pack para que solo muestre pedidos que estén en la tabla
   //sacamos si es envuelto para regalo para no mostrar mensaje de obsequio en ese caso
   //sacamos id_cart para buscar más tarde el id_customization si hubiera caja sorpresa
+  //30/03/2022 obtenemos un indicador pedido_dropshipping si el pedido está en la tabla lafrips_dropshipping para mostrar mensaje en picking y packing (esos productos no aparecerán en el picking ni packing)
   $sql_info_pedido = "SELECT ord.id_customer AS id_cliente, CONCAT(cus.firstname,' ', cus.lastname) AS nombre_cliente, CONCAT(adr.address1,' ', adr.address2) AS direccion, adr.postcode AS codigo_postal, 
   adr.city AS ciudad, sta.name AS provincia, col.name AS pais, ord.date_add AS fecha_pedido, car.name AS transporte, 
-  ord.module AS module, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ppe.nombre_estado AS 'estado_pickpack', ord.gift AS regalo, ord.id_cart AS id_cart, ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2  
+  ord.module AS module, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ppe.nombre_estado AS 'estado_pickpack', ord.gift AS regalo, ord.id_cart AS id_cart, ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2,
+  IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping  
   FROM lafrips_customer cus
   JOIN lafrips_orders ord ON ord.id_customer = cus.id_customer
   JOIN lafrips_address adr ON ord.id_address_delivery = adr.id_address
@@ -198,6 +200,7 @@ function infoProducts($pedido, $ids_pedidos, $action){
   
   //sacamos el campo de lafrips_product 'customizable'. Tiene valor 0 si no lo es, 1 si es pero no es required el campo, 2 si es required.
   //23/12/2020 aparte de customizable, sacamos customizable_data, que es un concat de los campos value de customización, para cuando el producto es carta hogwarts, sacando una cadena con el o los nombres para la carta, ya que al ser el mismo id_producto e id_cart aunque haya varias cartas van a salir como una con varias unidades. Hacemos JOIN a lafrips_orders para obtener el id_cart del pedido
+  //30/03/2022 Añadimos left join a productos_vendidos_sin_stock para sacar si el producto era sin stock y dropshipping y evitar que los productos aparezcan en picking y packing
   $sql_productos_pedido = "SELECT ode.id_order AS id_order, ode.product_id AS id_producto, ode.product_attribute_id AS id_atributo, ode.product_name AS nombre_completo,    
   ode.product_reference AS referencia_producto, ode.product_ean13 AS ean, ode.product_quantity AS cantidad, ode.unit_price_tax_incl AS precio_producto,  
   CONCAT( 'http://lafrikileria.com', '/', img.id_image, '-home_default/', 
@@ -233,8 +236,11 @@ function infoProducts($pedido, $ids_pedidos, $action){
   LEFT JOIN lafrips_warehouse_product_location wpl ON wpl.id_product = ode.product_id AND wpl.id_product_attribute = ode.product_attribute_id     
   LEFT JOIN lafrips_localizaciones loc ON loc.id_product = ode.product_id AND loc.id_product_attribute = ode.product_attribute_id
   JOIN lafrips_orders ord ON ode.id_order = ord.id_order
+  LEFT JOIN lafrips_productos_vendidos_sin_stock pvs ON pvs.id_order = ode.id_order 
+			AND pvs.id_product = ode.product_id AND pvs.id_product_attribute = ode.product_attribute_id
   WHERE ode.id_order IN (".$pedidos.") 
   AND wpl.id_warehouse = 1 
+  AND (pvs.dropshipping != 1 OR pvs.dropshipping IS NULL)
   GROUP BY ode.id_order, ode.product_id, ode.product_attribute_id
   ".$ordenar.";";
   //ORDER BY FIELD(ode.product_id, 5344) ASC, wpl.location;"; 

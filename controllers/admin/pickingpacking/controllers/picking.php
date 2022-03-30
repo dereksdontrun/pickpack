@@ -77,6 +77,7 @@ if(isset($_GET['id_empleado'])){
             $regalo = $info_pedido[0]['regalo'];
             $id_cart = $info_pedido[0]['id_cart'];
             $amazon = $info_pedido[0]['module'];
+            // $pedido_dropshipping = $info_pedido[0]['pedido_dropshipping'];
             //si el módulo de pago es amazon $amazon = 1
             if ($amazon == 'amazon'){
                 $amazon = 1;

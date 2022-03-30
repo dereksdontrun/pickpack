@@ -15,6 +15,7 @@ include('header.php');
 
   </h1>
   <h5><span style="font-size: 80%;">Estado Pick Pack actual</span> <strong><?= $estado_pickpack ?></strong></h5> 
+    
   <div class="datos_cliente">
     <address>          
       <strong><?= $nombre_cliente ?></strong><br>
