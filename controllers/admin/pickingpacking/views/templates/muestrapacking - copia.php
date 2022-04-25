@@ -213,10 +213,6 @@ include('header.php');
             <?php } ?>
             <!-- Stock en ambos almacenes -->
             <span style="font-size:14px;">Stock: Online ( <?= $stock_online ?> ) - Tienda ( <?= $stock_tienda ?> )</span>  
-            <!-- 25/04/2022  metemos un mensaje indicando que el producto es dropshipping si lo es -->
-            <?php if ($producto['dropshipping']) { ?>
-            <br><span style="font-size: 17px;" class="badge badge-pill badge-warning">Dropshipping</span>
-            <?php } ?>
             <!-- 23/12/2020 Si el producto es carta hogwarts queremos mostrar el o los nombres a poner en la carta para que se aseguren. El id de producto será 19578, sacamos el campo customizable_data, que contiene un concat con el o los nombres -->
             <?php if ($producto['id_producto'] == 19578){ ?>
             <br><br>

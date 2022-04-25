@@ -126,10 +126,6 @@ include('header.php');
         <?php } ?>
         <!-- Stock en ambos almacenes -->
         <span style="font-size:14px;">Stock: Online ( <?= $stock_online ?> ) - Tienda ( <?= $stock_tienda ?> )</span>  
-        <!-- 25/04/2022 metemos un mensaje indicando que el producto es dropshipping si lo es -->
-        <?php if ($producto['dropshipping']) { ?>
-        <br><span style="font-size: 17px;" class="badge badge-pill badge-warning">Dropshipping</span>
-        <?php } ?>
         <!-- Si el producto es de una caja sorpresa, su id_order no coincidirá con $pedido, que es el pedido base, mostramos mensaje e imagen de caja sopresa, y guardaremos el id_order en array -->
         <?php if ($producto['id_order'] != $pedido){  
             $ids_cajas[] = $producto['id_order'];

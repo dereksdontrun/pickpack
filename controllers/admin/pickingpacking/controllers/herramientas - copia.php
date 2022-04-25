@@ -157,12 +157,10 @@ function infoOrder($pedido){
   //sacamos si es envuelto para regalo para no mostrar mensaje de obsequio en ese caso
   //sacamos id_cart para buscar más tarde el id_customization si hubiera caja sorpresa
   //30/03/2022 obtenemos un indicador pedido_dropshipping si el pedido está en la tabla lafrips_dropshipping para mostrar mensaje en picking y packing (esos productos no aparecerán en el picking ni packing)
-  //25/04/2022 Si el pedido de dropshipping tiene que pasar primero por almacén si queremos hacer picking del producto, de modo que en esta consulta indicamos el valor de envio_almacen en lafrips_dropshipping_address si es que existe el pedido dropshipping
   $sql_info_pedido = "SELECT ord.id_customer AS id_cliente, CONCAT(cus.firstname,' ', cus.lastname) AS nombre_cliente, CONCAT(adr.address1,' ', adr.address2) AS direccion, adr.postcode AS codigo_postal, 
   adr.city AS ciudad, sta.name AS provincia, col.name AS pais, ord.date_add AS fecha_pedido, car.name AS transporte, 
   ord.module AS module, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ppe.nombre_estado AS 'estado_pickpack', ord.gift AS regalo, ord.id_cart AS id_cart, ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2,
-  IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping,
-  IFNULL((SELECT envio_almacen FROM lafrips_dropshipping_address WHERE deleted = 0 AND id_order = ord.id_order), 0) AS dropshipping_envio_almacen  
+  IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping  
   FROM lafrips_customer cus
   JOIN lafrips_orders ord ON ord.id_customer = cus.id_customer
   JOIN lafrips_address adr ON ord.id_address_delivery = adr.id_address
@@ -182,8 +180,7 @@ function infoOrder($pedido){
 
 
 //Función para obtener la información del pedido y del cliente que mostraremos en pantalla de picking y de packing
-//25/04/2022 Añado parámetro que indica si el pedido es dropshipping, y si lo es, si el envío es a almacén, para ignorar o no los productos dropshipping. Deberán aparecer en picking y packing si van a almacén
-function infoProducts($pedido, $ids_pedidos, $action, $dropshipping_envio_almacen = 0){ 
+function infoProducts($pedido, $ids_pedidos, $action){ 
   //info de productos en pedido
   //$ids_pedidos contiene 0 si se llama desde el proceso normal de picking o packing para sacar los productos. Si después se chequea con la función checkCajas la lista de productos y contiene alguna caja, se llamará de nuevo a esta función con el/los id_order de los pedidos virtuales que corresponden a cada caja en el parámetro $ids_pedidos
   if ($ids_pedidos) {
@@ -200,17 +197,10 @@ function infoProducts($pedido, $ids_pedidos, $action, $dropshipping_envio_almace
   } else {
     $ordenar = ' ORDER BY FIELD(ode.product_id, 5344) ASC, wpl.location';
   }
-
-  //si contiene algún producto Dropshipping y el envío dropshipping es a almacén, los admitimos en la select. Por defecto consideramos que $dropshipping_envio_almacen es 0 y evitamos los productos				
-  $select_dropshipping = ' AND (pvs.dropshipping != 1 OR pvs.dropshipping IS NULL) '; //evitamos productos dropshipping por defecto
-  if ($dropshipping_envio_almacen) {					
-    $select_dropshipping = '';
-  }
   
   //sacamos el campo de lafrips_product 'customizable'. Tiene valor 0 si no lo es, 1 si es pero no es required el campo, 2 si es required.
   //23/12/2020 aparte de customizable, sacamos customizable_data, que es un concat de los campos value de customización, para cuando el producto es carta hogwarts, sacando una cadena con el o los nombres para la carta, ya que al ser el mismo id_producto e id_cart aunque haya varias cartas van a salir como una con varias unidades. Hacemos JOIN a lafrips_orders para obtener el id_cart del pedido
   //30/03/2022 Añadimos left join a productos_vendidos_sin_stock para sacar si el producto era sin stock y dropshipping y evitar que los productos aparezcan en picking y packing
-  //25/04/2022 Sacamos del producto si es o no dropshipping para mostrarlo en el caso de que el envío sea a almacén y saquemos los productos en picking y packing
   $sql_productos_pedido = "SELECT ode.id_order AS id_order, ode.product_id AS id_producto, ode.product_attribute_id AS id_atributo, ode.product_name AS nombre_completo,    
   ode.product_reference AS referencia_producto, ode.product_ean13 AS ean, ode.product_quantity AS cantidad, ode.unit_price_tax_incl AS precio_producto,  
   CONCAT( 'http://lafrikileria.com', '/', img.id_image, '-home_default/', 
@@ -237,8 +227,7 @@ function infoProducts($pedido, $ids_pedidos, $action, $dropshipping_envio_almace
   (SELECT SUM(physical_quantity) FROM lafrips_stock 
   WHERE id_product = ode.product_id
   AND id_product_attribute = ode.product_attribute_id  
-  AND id_warehouse = 4) AS 'stock_tienda',
-  IFNULL(pvs.dropshipping, 0) AS dropshipping
+  AND id_warehouse = 4) AS 'stock_tienda'
   FROM lafrips_product pro      
   JOIN lafrips_order_detail ode ON pro.id_product = ode.product_id   
   JOIN lafrips_product_lang pla ON pla.id_product = ode.product_id AND pla.id_lang = 1  
@@ -251,7 +240,7 @@ function infoProducts($pedido, $ids_pedidos, $action, $dropshipping_envio_almace
 			AND pvs.id_product = ode.product_id AND pvs.id_product_attribute = ode.product_attribute_id
   WHERE ode.id_order IN (".$pedidos.") 
   AND wpl.id_warehouse = 1 
-  ".$select_dropshipping."
+  AND (pvs.dropshipping != 1 OR pvs.dropshipping IS NULL)
   GROUP BY ode.id_order, ode.product_id, ode.product_attribute_id
   ".$ordenar.";";
   //ORDER BY FIELD(ode.product_id, 5344) ASC, wpl.location;"; 

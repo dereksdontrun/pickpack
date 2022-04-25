@@ -80,7 +80,6 @@ if(isset($_GET['id_empleado'])){
             $id_cart = $info_pedido[0]['id_cart'];
             $mensaje_regalo = $info_pedido[0]['mensaje_regalo'];
             $pedido_dropshipping = $info_pedido[0]['pedido_dropshipping'];
-            $dropshipping_envio_almacen = $info_pedido[0]['dropshipping_envio_almacen'];
             $nota_sobre_cliente = $info_pedido[0]['nota_sobre_cliente'];
             if ($info_pedido[0]['tlfno1'] != "") {
                 $telefono = $info_pedido[0]['tlfno1'];
@@ -166,7 +165,7 @@ if(isset($_GET['id_empleado'])){
             $comentario_picking = Db::getInstance()->getValue($sql_comentario_picking); 
 
             //info de productos en pedido
-            $productos_pedido = infoProducts($pedido, 0, 0, $dropshipping_envio_almacen);
+            $productos_pedido = infoProducts($pedido, 0, 0);
             if (!$productos_pedido) {
                 $action = 'packing';
                 $error_tracking = 'No pude encontrar los productos del pedido';

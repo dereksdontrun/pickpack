@@ -77,8 +77,7 @@ if(isset($_GET['id_empleado'])){
             $regalo = $info_pedido[0]['regalo'];
             $id_cart = $info_pedido[0]['id_cart'];
             $amazon = $info_pedido[0]['module'];
-            $pedido_dropshipping = $info_pedido[0]['pedido_dropshipping'];
-            $dropshipping_envio_almacen = $info_pedido[0]['dropshipping_envio_almacen'];
+            // $pedido_dropshipping = $info_pedido[0]['pedido_dropshipping'];
             //si el módulo de pago es amazon $amazon = 1
             if ($amazon == 'amazon'){
                 $amazon = 1;
@@ -121,7 +120,7 @@ if(isset($_GET['id_empleado'])){
             }
 
             //info de productos en pedido
-            $productos_pedido = infoProducts($pedido, 0, 0, $dropshipping_envio_almacen);
+            $productos_pedido = infoProducts($pedido, 0, 0);
             if (!$productos_pedido) {
                 $action = 'picking';
                 $error_tracking = 'No pude encontrar los productos del pedido';
