@@ -158,11 +158,13 @@ function infoOrder($pedido){
   //sacamos id_cart para buscar más tarde el id_customization si hubiera caja sorpresa
   //30/03/2022 obtenemos un indicador pedido_dropshipping si el pedido está en la tabla lafrips_dropshipping para mostrar mensaje en picking y packing (esos productos no aparecerán en el picking ni packing)
   //25/04/2022 Si el pedido de dropshipping tiene que pasar primero por almacén si queremos hacer picking del producto, de modo que en esta consulta indicamos el valor de envio_almacen en lafrips_dropshipping_address si es que existe el pedido dropshipping
+  //24/05/2022 obtenemos un indicador pedido_webservice si el pedido está en la tabla lafrips_webservice_orders para mostrar mensaje en packing 
   $sql_info_pedido = "SELECT ord.id_customer AS id_cliente, CONCAT(cus.firstname,' ', cus.lastname) AS nombre_cliente, CONCAT(adr.address1,' ', adr.address2) AS direccion, adr.postcode AS codigo_postal, 
   adr.city AS ciudad, sta.name AS provincia, col.name AS pais, ord.date_add AS fecha_pedido, car.name AS transporte, 
   ord.module AS module, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ppe.nombre_estado AS 'estado_pickpack', ord.gift AS regalo, ord.id_cart AS id_cart, ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2,
   IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping,
-  IFNULL((SELECT envio_almacen FROM lafrips_dropshipping_address WHERE deleted = 0 AND id_order = ord.id_order), 0) AS dropshipping_envio_almacen  
+  IFNULL((SELECT envio_almacen FROM lafrips_dropshipping_address WHERE deleted = 0 AND id_order = ord.id_order), 0) AS dropshipping_envio_almacen,
+  IF((SELECT COUNT(id_webservice_order) FROM lafrips_webservice_orders WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_webservice  
   FROM lafrips_customer cus
   JOIN lafrips_orders ord ON ord.id_customer = cus.id_customer
   JOIN lafrips_address adr ON ord.id_address_delivery = adr.id_address

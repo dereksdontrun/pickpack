@@ -294,10 +294,12 @@ class AdminGestionPickpackController extends ModuleAdminController {
 
         //sacamos info del cliente y pedido, LEFT JOIN para state ya que muchos de amazon no tienen
         //30/03/2022 añadimos campo para averiguar si el pedido está en lafrips_dropshipping e indicarlo en la vista
+        //24/05/2022 obtenemos un indicador pedido_webservice si el pedido está en la tabla lafrips_webservice_orders para mostrar mensaje en packing 
         $sql_info_pedido = "SELECT ord.id_customer AS id_cliente, CONCAT(cus.firstname,' ', cus.lastname) AS nombre_cliente, CONCAT(adr.address1,' ', adr.address2) AS direccion, adr.postcode AS codigo_postal, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ohi.date_add AS fecha_estado_prestashop, ord.module AS amazon,
         adr.city AS ciudad, sta.name AS provincia, col.name AS pais, ord.date_add AS fecha_pedido, car.name AS transporte, ord.gift AS regalo, 
         ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2,
-        IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping  
+        IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping,
+        IF((SELECT COUNT(id_webservice_order) FROM lafrips_webservice_orders WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_webservice   
         FROM lafrips_customer cus
         JOIN lafrips_orders ord ON ord.id_customer = cus.id_customer
         JOIN lafrips_address adr ON ord.id_address_delivery = adr.id_address
@@ -330,6 +332,7 @@ class AdminGestionPickpackController extends ModuleAdminController {
         $mensaje_regalo = $info_pedido[0]['mensaje_regalo'];
         $nota_sobre_cliente = $info_pedido[0]['nota_sobre_cliente'];
         $pedido_dropshipping = $info_pedido[0]['pedido_dropshipping'];
+        $pedido_webservice = $info_pedido[0]['pedido_webservice'];
         if ($info_pedido[0]['tlfno1'] != "") {
             $telefono = $info_pedido[0]['tlfno1'];
         } else {
@@ -583,6 +586,7 @@ class AdminGestionPickpackController extends ModuleAdminController {
                 'seguimiento' => $seguimiento,
                 'caja_sorpresa' => $caja_sorpresa,
                 'pedido_dropshipping' => $pedido_dropshipping,
+                'pedido_webservice' => $pedido_webservice,
                 'token' => Tools::getAdminTokenLite('AdminGestionPickpack'),
                 'url_base' => Tools::getHttpHost(true).__PS_BASE_URI__.'lfadminia/',
             )

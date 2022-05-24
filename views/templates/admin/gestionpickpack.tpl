@@ -74,7 +74,8 @@
             {/if}           
             <b>Pagado:</b> {$metodo_pago}<br>
             <b>Transporte:</b><br> <span class="badge badge-pill badge-info">{$transporte}</span><br>
-            <b>Estado:</b> {$estado_prestashop} <i>{$fecha_estado_prestashop|date_format:"%d-%m-%Y %H:%M:%S"}</i><br>            
+            <b>Estado:</b> {$estado_prestashop} <i>{$fecha_estado_prestashop|date_format:"%d-%m-%Y %H:%M:%S"}</i><br> 
+            {if $pedido_webservice}<span class="badge badge-pill badge-warning">Pedido WebService</span><br>{/if}           
             {if $pedido_dropshipping}<span class="badge badge-pill badge-warning">Contiene Dropshipping</span><br>{/if}
             <b>Envuelto para Regalo:</b> {if $regalo}<span class="badge badge-pill badge-danger">SI</span>{else}No{/if}<br> 
             {if $regalo}<b>Mensaje regalo:</b> 

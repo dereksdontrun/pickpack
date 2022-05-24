@@ -45,6 +45,9 @@ include('header.php');
             <?php if ($pedido_dropshipping){ ?>
             <h3><span class="badge badge-pill badge-warning">Contiene Dropshipping</span></h3>
             <?php } ?>
+            <?php if ($pedido_webservice){ ?>
+            <h3><span class="badge badge-pill badge-warning">Pedido Webservice</span></h3>
+            <?php } ?>
             <?php if ($amazon){ ?>
             <h3><span class="badge badge-pill badge-info">AMAZON</span></h3>
             <?php } ?>       
@@ -275,6 +278,18 @@ include('header.php');
 
 
 <?php  } //fin foreach producto  ?>
+
+<!-- Si el pedido es webservice ponemos un check required para que borren el remitente de la etiqueta -->
+<?php if ($pedido_webservice){ ?>    
+    <div class="row">
+        <div class="form-group form-check" style="padding-left:30%;">
+            <label class="btn btn-lg btn-warning">Pedido WebService 
+                <input type="checkbox" name="checkbox_webservice" id="checkbox_webservice" required>
+            </label>
+        </div>
+    </div>
+    <hr>      
+<?php } ?>
 
 <!-- Si el cliente ha pedido envuelto para regalo -->
 <?php if ($regalo){ ?>    
