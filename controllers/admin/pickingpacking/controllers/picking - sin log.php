@@ -25,14 +25,10 @@ if(isset($_GET['id_empleado'])){
                 $_SESSION["varios"] = 1;                
             }
 
-            //pickpack_log login
-            pickpackLog(0, 0, 'picking', 0, 0, 0, 0, 0, 1);
-
             require_once("../views/templates/buscapedido.php");
         } else {
             //no se ha encontrado el nombre de usuario, queremos que vuelva de la pantalla de error al login
-            muestraError('login', 'No encuentro el usuario en el sistema');       
-            return;     
+            muestraError('login', 'No encuentro el usuario en el sistema');            
         }
     } else {
         $token = Tools::getAdminTokenLite('AdminModules');
@@ -54,15 +50,13 @@ if(isset($_GET['id_empleado'])){
         $busqueda = obtenerIdOrder($pedido);
     } else {
         //no se ha introducido nada en el formulario
-        muestraError('picking', 'Debes introducir algo para buscar en el formulario, aquí no somos adivinos');  
-        return;        
+        muestraError('picking', 'Debes introducir algo para buscar en el formulario, aquí no somos adivinos');          
     }    
 
     //obtenerIdOrder devuelve un array con el id_order en primer lugar y el error en segundo. Si devuelve id_order como 0, es que hay error, llamamos a error.php
     if (!$busqueda[0]) {
         //enviamos la variable que contiene la descripción del error y la acción que estabamos haciendo
-        muestraError('picking', $busqueda[1]);    
-        return;    
+        muestraError('picking', $busqueda[1]);        
     } else {
         //devuelve un id_order correcto, pasamos a procesar el picking
         $id_order = $busqueda[0];
@@ -80,7 +74,7 @@ if(isset($_GET['id_empleado'])){
             //primero comprobamos que el pedido entró como guardado
             if (!esGuardado($id_order)) {
                 //no está en lafrips_pedidos_guardados
-                muestraError('picking', 'El pedido introducido no corresponde a un pedido guardado', (int)$id_order);  
+                muestraError('picking', 'El pedido introducido no corresponde a un pedido guardado');  
                 return;
             }
             $pedidos_cliente = variosPedidos($id_order);            
@@ -185,7 +179,7 @@ if(isset($_GET['id_empleado'])){
         }
 
         foreach ($ids_cajas AS $id_caja) {
-            finalizaOrder($id_caja, 'picking', $incidencia, $comentario_picking_caja, 0, 0, 1);            
+            finalizaOrder($id_caja, 'picking', $incidencia, $comentario_picking_caja);            
         }
     }
         
@@ -201,18 +195,10 @@ if(isset($_GET['id_empleado'])){
         // }
         
     } else {
-        muestraError('picking', 'Hubo un problema al actualizar los datos del picking', (int)$id_order); 
-        return;        
+        muestraError('picking', 'Hubo un problema al actualizar los datos del picking');         
     }
 
 } elseif (isset($_POST['submit_volver'])) {
-    //pickpack_log  
-    $id_order = $_POST['id_pedido'];   
-    //si $id_order = 0 es que venimos de la pantalla de error, por ejemplo por dar a buscar con el input vacío. No hacemos log ya que para errores lo hacemos en muestraError()
-    if ($id_order) {
-        pickpackLog($id_order, 0, 'picking', 0, 0, 0, 0, 1);
-    }      
-
     $action = 'picking';
     require_once("../views/templates/buscapedido.php");
 }
@@ -226,8 +212,7 @@ function inicioPicking() {
         // print_r($id_order);
         $info_pedido = infoOrder($id_order);
         if (!$info_pedido) {
-            muestraError('picking', 'No pude encontrar el pedido', (int)$id_order);       
-            return;     
+            muestraError('picking', 'No pude encontrar el pedido');            
         } else {
             //enviamos los datos a la función procesaOrder() para que procese
             procesaOrder($info_pedido);
@@ -303,16 +288,12 @@ function procesaOrder($info_pedido) {
     
     if ($productos_pedido == 'dropshipping') {
         //el pedido era dropshipping y no devuelve productos, probablemente todos los porductos son dropshipping con entrega a cliente
-        //pickpack_log            
-        pickpackLog($id_order, 0, 'picking_dropshipping', 1);
-        //mostramos picking, aunque estos pedidos deberían estar en enviado y no salir en el proceso de varios
         $warning_pedido_dropshipping = 1;
         $productos_pedido = null;
         require_once("../views/templates/muestrapicking.php");
     } elseif (!$productos_pedido) {
         //no encuentra productos y no era dropshipping
-        muestraError('picking', 'No pude encontrar los productos del pedido', (int)$id_order);   
-        return;      
+        muestraError('picking', 'No pude encontrar los productos del pedido');         
     } else {
         //devuelve productos
         //tenemos que comprobar si en el pedido hay cajas sorpresa para sacar los productos. Si el campo de producto 'customizable' es distinto de 0 y el id_product es 5344. Enviamos $productos_pedido a otra función en herramientas.php que primero comprueba si hay cajas, y si las hay, dependiendo de si es picking (mostrará todos los productos seguidos) o packing (deben salir cada producto "dentro" de su caja) devolverá $productos_pedido en un formato u otro.
@@ -326,8 +307,7 @@ function procesaOrder($info_pedido) {
         $productos_pedido = checkCajas($productos_pedido , 'picking', $id_order, $id_cart);
         //si vuelve 0 es que había cajas pero hay errores
         if (!$productos_pedido) {
-            muestraError('picking', 'Error con la/s caja/s sorpresa del pedido. No han sido creadas o no se encuentran.', (int)$id_order);     
-            return;        
+            muestraError('picking', 'Error con la/s caja/s sorpresa del pedido. No han sido creadas o no se encuentran.');             
         } else {
             //en este punto debemos tener la info del pedido, del cliente y sus mensajes y de los productos en el pedido, comprobamos si es el primer picking del pedido y llamamos a la vista para mostrar el picking
             // para almacenar la fecha de inicio de picking, cuando se muestra el pedido hacemos una búsqueda en lafrips_pick_pack. Si comenzado_picking es 0 es que es el primer picking, lo ponemos a 1 y guardamos date now() en date_inicio_picking. Si hay incidencias y se repiten los picking será un dato inválido, la duración del picking solo sirve si es un pedido sin incidencias. También cambiamos el estado de pickpack a Picking Abierto      
@@ -342,12 +322,7 @@ function procesaOrder($info_pedido) {
             $comenzado_picking = Db::getInstance()->ExecuteS($sql_comenzado_picking);
             //si comenzado_picking es 0 marcamos inicio picking
             if (!$comenzado_picking[0]['comenzado_picking']){
-                //el log se hace en la función comenzadoPicking()
                 comenzadoPicking($id_order);                
-            } else {
-                //solo log, abrir pero no primera vez
-                //pickpack_log            
-                pickpackLog($id_order, 0, 'picking', 1);
             }
             
             require_once("../views/templates/muestrapicking.php");
@@ -391,7 +366,7 @@ function mensajesOrder($id_order) {
 
 }
 
-//función que recibe id_order y marca el pedido como comenzado picking (utilizado para estadísticas). El pedido puede ser base, o de caja sorpresa, en cuyo caso enviaremos el comentario a añadir como parámetro. Cada pedido solo puede pasar por aquí una vez, la primera que se abre picking
+//función que recibe id_order y marca el pedido como comenzado picking (utilizado para estadísticas). El pedido puede ser base, o de caja sorpresa, en cuyo caso enviaremos el comentario a añadir como parámetro
 function comenzadoPicking($id_order, $comentario_picking_caja = '') {   
     $sql_update_comenzado_picking = 'UPDATE lafrips_pick_pack
     SET
@@ -405,14 +380,6 @@ function comenzadoPicking($id_order, $comentario_picking_caja = '') {
     date_upd = NOW()
     WHERE id_pickpack_order = '.$id_order.';';
     Db::getInstance()->execute($sql_update_comenzado_picking);
-
-    //pickpack_log  
-    //si es caja lo indicamos en log
-    $caja = 0;
-    if ($comentario_picking_caja != '') {
-        $caja = 1;
-    }          
-    pickpackLog($id_order, $caja, 'picking', 1, 1);
 }
 
 //función que recibe el/los id de pedido que contienen los productos de las cajas sorpresa, crea comentario y llama a comenzadoPicking para marcarlos como comenzados
@@ -427,14 +394,8 @@ function comenzadoPickingCajas($id_order, $ids_orders_caja_sorpresa) {
         $comenzado_picking = Db::getInstance()->ExecuteS($sql_comenzado_picking);
         //si comenzado_picking es 0 marcamos inicio picking
         if (!$comenzado_picking[0]['comenzado_picking']) {
-            //pickpack_log lo hacemos en comenzadoPicking()  
-
             comenzadoPicking($id_caja, $comentario_picking_caja);            
-        } else {
-            //solo log, abrir pero no primera vez
-            //pickpack_log            
-            pickpackLog($id_caja, 1, 'picking', 1);
-        }
+        }        
     }
 }
 

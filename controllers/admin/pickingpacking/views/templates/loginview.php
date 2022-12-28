@@ -26,6 +26,12 @@ include('header.php');
             <br><br>
             <button type="submit" name="submit_hacer_picking" class="btn boton_picking">Picking</button>
             <button type="submit" name="submit_hacer_packing" class="btn boton_packing">Packing</button>
+            <!-- 25/11/2022 Para quitar la posibilidad de procesar varios pedidos basta con comentar los botones de debajo -->
+            <br><br>
+            <p class="lead">Para preparar pedidos por cliente:</p>
+            <button type="submit" name="submit_picking_varios" class="btn boton_picking">Picking Varios</button>
+            <button type="submit" name="submit_packing_varios" class="btn boton_packing">Packing Varios</button>
+            <!-- 25/11/2022 Comentar hasta aquí -->
         </div>
         </form>      
     </div>  

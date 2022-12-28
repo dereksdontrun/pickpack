@@ -23,15 +23,11 @@ if(isset($_GET['id_empleado'])){
                 $_SESSION["varios"] = 1;                
             }
 
-            //pickpack_log login
-            pickpackLog(0, 0, 'packing', 0, 0, 0, 0, 0, 1);
-
             require_once("../views/templates/buscapedido.php");
 
         } else {
             //no se ha encontrado el nombre de usuario, queremos que vuelva de la pantalla de error al login
-            muestraError('login', 'No encuentro el usuario en el sistema');   
-            return; 
+            muestraError('login', 'No encuentro el usuario en el sistema');    
         }
     } else {
         $token = Tools::getAdminTokenLite('AdminModules');
@@ -55,14 +51,12 @@ if(isset($_GET['id_empleado'])){
     } else {
         //no se ha introducido nada en el formulario
         muestraError('packing', 'Debes introducir algo para buscar en el formulario, aquí no somos adivinos');         
-        return;
     }
 
     //obtenerIdOrder devuelve un array con el id_order en primer lugar y el error en segundo. Si devuelve id_order como 0, es que hay error, llamamos a error.php
     if (!$busqueda[0]) {
         //enviamos la variable que contiene la descripción del error y la acción que estabamos haciendo
         muestraError('packing', $busqueda[1]);
-        return;
 
     } else {
         //devuelve un id_order correcto, pasamos a procesar el packing
@@ -199,7 +193,7 @@ if(isset($_GET['id_empleado'])){
 
         foreach ($ids_cajas AS $id_caja) {
             //marcamos como finalizado packing o no según haya incidencia, etc
-            finalizaOrder($id_caja, 'packing', $incidencia, $comentario_packing_caja, 0, 0, 1); 
+            finalizaOrder($id_caja, 'packing', $incidencia, $comentario_packing_caja); 
             //metemos el id de pedido y su tipo caja en $_SESSION["pedidos_cambio_estado"] para luego desde inicioPacking(), si no hay incidencia, hacer cambio de estado de pedido de caja de virtual a entregado            
             $_SESSION["pedidos_cambio_estado"][$id_caja] = 'caja';  
 
@@ -215,18 +209,10 @@ if(isset($_GET['id_empleado'])){
         inicioPacking();        
         
     } else {
-        muestraError('packing', 'Hubo un problema al actualizar los datos del packing');      
-        return;   
+        muestraError('packing', 'Hubo un problema al actualizar los datos del packing');         
     }
 
 } elseif (isset($_POST['submit_volver'])) {
-    //pickpack_log  
-    $id_order = $_POST['id_pedido'];          
-    //si $id_order = 0 es que venimos de la pantalla de error, por ejemplo por dar a buscar con el input vacío. No hacemos log
-    if ($id_order) {
-        pickpackLog($id_order, 0, 'packing', 0, 0, 0, 0, 1);
-    } 
-
     $action = 'packing';
     require_once("../views/templates/buscapedido.php");
 }
@@ -242,8 +228,7 @@ function inicioPacking() {
         // print_r($id_order);
         $info_pedido = infoOrder($id_order);
         if (!$info_pedido) {
-            muestraError('packing', 'No pude encontrar el pedido');          
-            return;  
+            muestraError('packing', 'No pude encontrar el pedido');            
         } else {
             //enviamos los datos a la función procesaOrder() para que procese
             procesaOrder($info_pedido);
@@ -265,11 +250,7 @@ function inicioPacking() {
             }        
 
             if ($error_cambio_estado) {
-                //ponemos log, enviando el mensaje de error que mostramos
-                pickpackLog(0, 0, 'cambio_estado', 0, 0, 0, 0, 0, 0, $mensaje_error_cambio);
-
-                muestraError('packing', 'Hubo un problema al procesar el cambio de estado de Prestashop'.$mensaje_error_cambio);  
-                return;       
+                muestraError('packing', 'Hubo un problema al procesar el cambio de estado de Prestashop'.$mensaje_error_cambio);         
             } else {
                 //volvemos al formulario de buscar pedido
                 $action = 'packing';
@@ -346,16 +327,12 @@ function procesaOrder($info_pedido) {
     
     if ($productos_pedido == 'dropshipping') {
         //el pedido era dropshipping y no devuelve productos, probablemente todos los productos son dropshipping con entrega a cliente
-        //pickpack_log            
-        pickpackLog($id_order, 0, 'packing_dropshipping', 1);
-        //mostramos packing, aunque estos pedidos deberían estar en enviado y no salir en el proceso de varios
         $warning_pedido_dropshipping = 1;
         $productos_pedido = null;
         require_once("../views/templates/muestrapacking.php");
     } elseif (!$productos_pedido) {
         //no encuentra productos y no era dropshipping
-        muestraError('packing', 'No pude encontrar los productos del pedido');   
-        return;      
+        muestraError('packing', 'No pude encontrar los productos del pedido');         
     } else {
         //tenemos que comprobar si en el pedido hay cajas sorpresa para sacar los productos. Si el campo de producto 'customizable' es distinto de 0 y el id_product es 5344. Enviamos $productos_pedido a otra función en herramientas.php que primero comprueba si hay cajas, y si las hay, dependiendo de si es picking (mostrará todos los productos seguidos) o packing (deben salir cada producto "dentro" de su caja) devolverá $productos_pedido en un formato u otro.
 
@@ -369,7 +346,6 @@ function procesaOrder($info_pedido) {
         //si vuelve 0 es que había cajas pero hay errores
         if (!$productos_pedido) {
             muestraError('packing', 'Error con la/s caja/s sorpresa del pedido. No han sido creadas o no se encuentran.');                
-            return;
         } else {
             //tenemos en $ids_orders_caja_sorpresa los id_order de cada pedido que contiene los productos de las cajas
             
@@ -384,12 +360,7 @@ function procesaOrder($info_pedido) {
             $comenzado_packing = Db::getInstance()->ExecuteS($sql_comenzado_packing);
             //si comenzado_packing es 0 marcamos inicio packing
             if (!$comenzado_packing[0]['comenzado_packing']){
-                //log en comenzadoPacking()
                 comenzadoPacking($id_order);                
-            } else {
-                //solo log, abrir pero no primera vez
-                //pickpack_log            
-                pickpackLog($id_order, 0, 'packing', 1);
             }
             
             require_once("../views/templates/muestrapacking.php");
@@ -477,7 +448,7 @@ function mensajesCajas($ids_orders_caja_sorpresa) {
     return $mensajes_cliente_cajas;
 }
 
-//función que recibe id_order y marca el pedido como comenzado packing (utilizado para estadísticas). El pedido puede ser base, o de caja sorpresa, en cuyo caso enviaremos el comentario a añadir como parámetro.  Cada pedido solo puede pasar por aquí una vez, la primera que se abre packing
+//función que recibe id_order y marca el pedido como comenzado packing (utilizado para estadísticas). El pedido puede ser base, o de caja sorpresa, en cuyo caso enviaremos el comentario a añadir como parámetro
 function comenzadoPacking($id_order, $comentario_packing_caja = '') {   
     $sql_update_comenzado_packing = 'UPDATE lafrips_pick_pack
     SET
@@ -491,14 +462,6 @@ function comenzadoPacking($id_order, $comentario_packing_caja = '') {
     date_upd = NOW()
     WHERE id_pickpack_order = '.$id_order.';';
     Db::getInstance()->execute($sql_update_comenzado_packing);    
-
-    //pickpack_log  
-    //si es caja lo indicamos en log
-    $caja = 0;
-    if ($comentario_packing_caja != '') {
-        $caja = 1;
-    }          
-    pickpackLog($id_order, $caja, 'packing', 1, 1);
 }
 
 //función que recibe el/los id de pedido que contienen los productos de las cajas sorpresa, crea comentario y llama a comenzadoPacking para marcarlos como comenzados
@@ -513,14 +476,8 @@ function comenzadoPackingCajas($id_order, $ids_orders_caja_sorpresa) {
         $comenzado_packing = Db::getInstance()->ExecuteS($sql_comenzado_packing);
         //si comenzado_packing es 0 marcamos inicio packing
         if (!$comenzado_packing[0]['comenzado_packing']){
-            //pickpack_log lo hacemos en comenzadoPacking() 
-
             comenzadoPacking($id_caja, $comentario_packing_caja); 
-        } else {
-            //solo log, abrir pero no primera vez
-            //pickpack_log            
-            pickpackLog($id_caja, 1, 'packing', 1);
-        }           
+        }            
     }
 }
 
@@ -594,8 +551,7 @@ function procesaProductos() {
 //función que finalizado el packing recibe un id de pedido y su tipo, caja o pedido normal. Si el pedido es caja debería marcarse como entregado y si es pedido principal o normal, como Enviado, o entregado, dependiendo de ciertos parámetros. 
 //Si el packing se cierra sin incidencia enviamos los datos a la tabla frik_cambio_enviado para que se realice el proceso de cambio de estado a Enviado de forma asincrona, y si es GLS el envío de email de seguimiento.
 //primero nos aseguramos de que los pedidos no están en estado Enviado, Cancelado, Entregado, Error pago. Si el estado es virtual se considera un pedido con productos para caja virtual y se pasará a entregado  
-//01/03/2021 Añadimos para que ignore los pedidos de ClickCanarias, estados "Pendiente envío fuera península." y "Pagado con ClickCanarias" 
-//01/12/2022 Para que los pedidos de Canarias en estado Pendiente envío fuera península no muestren error al finalizar el packing, el return en caso de estar en ese estado será true, pero sin insertar en la tabla cambio_enviado
+//01/03/2021 Añadimos para que ignore los pedidos de ClickCanarias, estados "Pendiente envío fuera península." y "Pagado con ClickCanarias"  
 function cambioEstado($tipo, $id_order) {
     if ($tipo == 'pedido') {
         //primero nos aseguramos de que los pedidos no están en estado Enviado, Cancelado, Entregado, Error pago. Si el estado es virtual se considera un pedido con productos para cja virtual y se pasará a entregado  
@@ -627,7 +583,6 @@ function cambioEstado($tipo, $id_order) {
         $current_state = (int)$order->current_state;
 
         //si el estado actual no es Enviado, Cancelado, Entregado, Error pago, canarias, o si es virtual enviamos a la tabla. Si es virtual lo pasaremos a entregado
-        //01/12/2022 Para que los pedidos de Canarias en estado Pendiente envío fuera península no muestren error al finalizar el packing, el return en caso de estar en ese estado será true, pero sin insertar en la tabla cambio_enviado, con lo que no se mostrará error. Añado elseif  ($current_state == $id_pendiente_fuera).
         if (($current_state !== $id_estado_enviado) && ($current_state !== $id_estado_entregado) && ($current_state !== $id_estado_cancelado) && ($current_state !== $id_estado_errorpago) && ($current_state !== $id_estado_canarias) && ($current_state !== $id_pendiente_fuera) || ($current_state == $id_pedido_virtual)) {
             if ($current_state == $id_pedido_virtual) {
                 $cambio = 'entregado';
@@ -640,9 +595,6 @@ function cambioEstado($tipo, $id_order) {
             } else {
                 return array(false, '<br>No pudo hacerse la inserción en tabla de cambios de estado para pedido '.$id_order);
             }
-        } elseif ($current_state == $id_pendiente_fuera) {
-            //cuando van a Canarias el cambio de estado  aEnviado es manual,  de modo que no queremosinsertar en cambio de estado pero tampoco queremos mostrar error en packing
-            return array(true);
         } else {
             return array(false, '<br>Pedido '.$id_order.' en estado '.$order->getCurrentStateFull(1)['name']);
         }

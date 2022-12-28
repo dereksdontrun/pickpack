@@ -444,10 +444,7 @@ function variosPedidos($id_order) {
 }
 
 //función que llama a la página de error
-function muestraError($action, $mensaje_error, $id_order = 0) {
-  //pickpack_log            
-  pickpackLog($id_order, 0, 'error_'.$action, 0, 0, 0, 0, 0, 0, '', $mensaje_error);
-
+function muestraError($action, $mensaje_error) {
   require_once("../views/templates/error.php");
 }
 
@@ -468,7 +465,7 @@ function generaComentario($tipo, $action, $id_order = 0 ) {
 }
 
 //función que marca los resultados del picking/packing en el pedido en lafrips_pickpack. 
-function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obsequio = 0, $regalo = 0, $es_caja = 0) {
+function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obsequio = 0, $regalo = 0) {
   //obtenemos el id de la tabla pickpack
   $id_pickpack = PickPackOrder::getIdPickPackByIdOrder($id_order);
   
@@ -522,82 +519,11 @@ function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obseq
   date_upd = NOW()
   WHERE id_pickpack = '.$id_pickpack;   
 
-  //pickpack_log               
-  pickpackLog($id_order, $es_caja, $action, 0, 0, 1, $incidencia);
-
   if (Db::getInstance()->execute($sql_update_pickpack_pedido)){
       return true;
   }
 
   return false;
-}
-
-//función para hacer un log de lo que se hace en el picking y packing
-//$login indica si venimos al escoger usuario, si vale 1 y proceso en packing y varios es 0, sería botón packing normal, si varios fuera 1 sería botón packing varios, etc
-//$proceso indica si venimos de picking o packing, o si es cambio_estado, que siempre será error.
-//$abrir sería el momento en que abrimos el picking o el packing
-//$primera_apertura si es la primera vez que se entra al p@cking de este pedido
-//$cerrar sería el momento en que cerramos el p@cking
-//$incidencia si el picking o el packing se cierran como incidencia (1) o todo ok (0)
-//$cancelar si se salió pulsando cancelar
-//$mensaje_error_cambio es el mensaje que se muesatra al usuario si al finalizar packing hay problemas al intentar insertar el pedido/s para cambio de estado
-//$mensaje_error es el mensaje que se muestra en error,php cuando se pasa por la función muestraError()
-function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_apertura = 0, $cerrar = 0, $incidencia = 0, $cancelar = 0, $login = 0, $mensaje_error_cambio = '', $mensaje_error = '') {
-  //$id_empleado y $nombre_empleado los sacamos de $_SESSION
-  $id_empleado = $_SESSION['id_empleado'];
-  $nombre_empleado = $_SESSION['nombre_empleado'];
-  $varios = $_SESSION['varios'];
-
-  if ($id_order) {
-    $id_estado_pickpack = PickPackOrder::getIdEstadoPickPackByIdOrder($id_order);
-    $order = new Order($id_order);
-    $id_estado_prestashop = $order->current_state;
-  } else {
-    $id_estado_pickpack = 0; 
-    $id_estado_prestashop = 0;
-  }  
-
-  $sql_insert_pickpack_log = "INSERT INTO lafrips_pick_pack_log
-  (id_pickpack_order,
-  caja,
-  id_estado_pickpack,
-  id_estado_prestashop,
-  varios,
-  id_employee,
-  nombre_employee,
-  `login`,
-  proceso,
-  abrir,
-  primera_apertura,
-  cerrar,  
-  incidencia,
-  cancelar,
-  error_cambio_estado,
-  mensaje_error,
-  date_add)
-  VALUES
-  ($id_order,
-  $caja,
-  $id_estado_pickpack,
-  $id_estado_prestashop,
-  $varios,
-  $id_empleado,
-  '$nombre_empleado',
-  $login,
-  '$proceso',
-  $abrir,
-  $primera_apertura,
-  $cerrar,  
-  $incidencia,
-  $cancelar,
-  '$mensaje_error_cambio',
-  '$mensaje_error',
-  NOW())";
-
-  Db::getInstance()->Execute($sql_insert_pickpack_log);
-
-  return;
-
 }
 
 

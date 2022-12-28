@@ -5,16 +5,20 @@ include('header.php');
 ?>
 <!-- Cabecera con info sobre cliente y pedido -->
 <div class="jumbotron jumbotron_packing">
-    <h1 class="display-4"><span style="font-size: 50%;">PACKING</span> <strong><?= $pedido ?></strong> <span style="font-size: 50%;"><?= $fecha_pedido ?></span>  
+    <h1 class="display-4"><span style="font-size: 50%;">PACKING</span> <strong><?= $id_order ?></strong> <span style="font-size: 50%;"><?= $fecha_pedido ?></span>  
         
         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"><?= $_SESSION["nombre_empleado"] ?>
         <span class="caret"></span></button>
         <ul class="dropdown-menu">
-            <li><a href="<?= _MODULE_DIR_.'pickpack/controllers/admin/pickingpacking/pickpackindex.php'; ?>">  Cerrar Sesión</a></li>              
+            <li><a href="<?= _MODULE_DIR_.'pickpack/controllers/admin/pickingpacking/pickpackindex.php?cerrar_sesion=1'; ?>">  Cerrar Sesión</a></li>              
         </ul>
         
     </h1>
     <h5><span style="font-size: 80%;">Estado Pick Pack actual</span> <strong><?= $estado_pickpack ?></strong></h5>
+    <?php if ($_SESSION["varios"]) { ?>
+        <h5>ATENCIÓN: Te encuentras realizando el packing de varios pedidos de un mismo cliente</h5>
+    <?php } ?>
+
     <?php if ($empleado_picking && $empleado_picking !== ''){ ?>
         <p class="empleado">Picking realizado por <?= $empleado_picking ?></p>
     <?php } else { ?>
@@ -65,15 +69,16 @@ include('header.php');
     </div>
 </div> <!-- fin jumbotron -->  
 
-<!-- 03/11/2020 mostramos mensaje de warning avisando de que este pedido se encontraba en estado Paquete Enviado al abrir el packing y podría estar duplicado -->
-<?php if ($estado_pickpack == 'Paquete Enviado'){ ?>
+<!-- 03/11/2020 mostramos mensaje de warning avisando de que este pedido se encontraba en estado Paquete Enviado al abrir el packing y podría estar duplicado 
+29/11/2022 añado el campo finalizado de lafrips_pick_pack que estará a 1 si se terminó el packing, independientemente del estado actual del pickpack -->
+<?php if ($estado_pickpack == 'Paquete Enviado' || $finalizado){ ?>
 
 <div class="container container_mensajes">  
   <div class="panel">    
     <div class="list-group">
       <h3>¡ATENCIÓN!</h3>      
       <div class="list-group-item" style="color:white; background-color:#e34f4f; border:2px solid black;"> 
-        <p>Este pedido se encuentra en estado de pickpack "Paquete Enviado" en este momento.</p> 
+        <p>Este pedido se encuentra en estado de pickpack "Paquete Enviado" o su packing ya fue finalizado <strong><?= $fecha_fin_packing ?></strong>.</p> 
         <p>Asegúrate de que no está duplicado o tiene otra incidencia y se puede continuar con el packing.</p>       
       </div>      
     </div>
@@ -147,6 +152,10 @@ include('header.php');
     <h3>Productos - <?= $numero_productos ?></h3>
     <form id="formulario_packing" action="packing.php" method="post"> 
 
+    <?php if ($warning_pedido_dropshipping) { ?>
+        <h5>ATENCIÓN: Sin productos a preparar, pedido Dropshipping con entrega a cliente</h5>
+    <?php } ?>
+
     <!-- iniciamos la variable donde iremos guardando el id de pedido del producto actual del foreach para comparar  y saber si es de otro y por tanto de una caja sorpresa, y también la variable $estilo, que indicará la clase a añadir a row si es caja. Iniciamos con cajaB porque en la primera comprobación pondrá cajaA -->
     <?php $id_caja_actual = 0;  
             $estilo = 'cajaB';
@@ -172,12 +181,12 @@ include('header.php');
         
 
     <!-- Para distinguir los productos de las cajas sorpresa, si las hay, vamos a poner a row una clase diferente que cambiara el color de fondo si es producto caja.  Comparamos el id de pedido con el del pedido padre, si no coincide es caja, guardamos el id y lo volvemos a comparar con cada producto, si aparece otro id pedido diferente sería otra caja y ponemos la segunda clase de color base, si hay varias cajas las vamos intercambiando   -->      
-    <?php if ($producto['id_order'] == $pedido){  ?>
+    <?php if ($producto['id_order'] == $id_order){  ?>
       <!-- Si el id pedido del producto coincide con el pedido padre, no es de caja, no añadimos clase para color de fondo  -->
     <div class="row">
 
         <!-- Si el id pedido del producto NO coincide con el pedido padre, es de caja, añadimos clase para color de fondo, pero primero comparamos el id de pedido del producto con id_caja_actual, si no coincide hay que cambiar la variable estilo ,si es una , cajaA, ponemos la otra, cajaB, y viceversa, y después guardamos el id en la variable caja_actual -->
-    <?php } elseif ($producto['id_order'] != $pedido) {  
+    <?php } elseif ($producto['id_order'] != $id_order) {  
             if ($producto['id_order'] != $id_caja_actual) { //la priemra vez será diferente, al ser 0 el valor inicial de id_caja_actual
                 $id_caja_actual = $producto['id_order'];
                 //cambiamos el estilo, si hay uno ponemos el otro
@@ -228,8 +237,8 @@ include('header.php');
                 <p><span style="font-size:16px;"><?= $producto['customizable_data'] ?></span></p>
             </div> 
             <?php } ?>
-            <!-- Si el producto es de una caja sorpresa, su id_order no coincidirá con $pedido, que es el pedido base, mostramos mensaje e imagen de caja sopresa, y guardaremos el id_order en array -->
-            <?php if ($producto['id_order'] != $pedido){  
+            <!-- Si el producto es de una caja sorpresa, su id_order no coincidirá con $id_order, que es el pedido base, mostramos mensaje e imagen de caja sopresa, y guardaremos el id_order en array -->
+            <?php if ($producto['id_order'] != $id_order){  
                 $ids_cajas[] = $producto['id_order'];
             ?>
             <br><br>
@@ -291,8 +300,8 @@ include('header.php');
     <hr>      
 <?php } ?>
 
-<!-- Si el cliente ha pedido envuelto para regalo -->
-<?php if ($regalo){ ?>    
+<!-- Si el cliente ha pedido envuelto para regalo.  Si tenemos el warning de pedido todo dropshipping no mostramos -->
+<?php if ($regalo && !$warning_pedido_dropshipping){ ?>    
     <div class="row">
         <div class="form-group form-check" style="padding-left:30%;">
             <label class="btn btn-lg btn-warning">Envuelto regalo / nota: 
@@ -303,8 +312,8 @@ include('header.php');
     <hr>      
 <?php } ?>   
 
-<!-- Si el cliente lleva 5 o más pedidos ponemos un check para marcar si se coge el regalo, salvo que el pedido vaya en vuelto para regalo, en cuyo caso suponemos que no se le envía al comprador y no queremos meter obsequio  -->
-<?php if (($numero_pedidos > 4) && (!$regalo)){ ?>       
+<!-- Si el cliente lleva 5 o más pedidos ponemos un check para marcar si se coge el regalo, salvo que el pedido vaya en vuelto para regalo, en cuyo caso suponemos que no se le envía al comprador y no queremos meter obsequio. Si tenemos el warning de pedido todo dropshipping tampoco mostramos  -->
+<?php if (($numero_pedidos > 4) && (!$regalo) && !$warning_pedido_dropshipping){ ?>       
 <div class="row">
     <div class="form-group form-check" style="padding-left:30%;">
       <label class="btn btn-lg btn-warning">Obsequio: 
@@ -327,7 +336,7 @@ include('header.php');
   <!-- coloco el número de productos en un input hidden para el proceso del Packing -->
   <input type="hidden" name="numero_productos" value="<?= $numero_productos ?>">
   <!-- coloco el número de pedido en un input hidden para el proceso del Packing -->
-  <input type="hidden" name="id_pedido" value="<?= $pedido ?>">
+  <input type="hidden" name="id_pedido" value="<?= $id_order ?>">
   <!-- coloco los ids de pedido que correspondan a pedidos de caja sorpresa, si los hay, en un input hidden para el proceso de Picking. Primero hacemos array_unique del array donde se han guardado, y para enviar el array por post hay que serializarlo aquí y unserializarlo en el destino, usamos comillas simples porque serialize añade comillas dobles -->
   <?php  $ids_cajas = array_unique($ids_cajas);  ?>
   <input type="hidden" name="ids_cajas" value='<?= serialize($ids_cajas) ?>'>

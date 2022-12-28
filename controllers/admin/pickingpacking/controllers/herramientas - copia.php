@@ -444,10 +444,7 @@ function variosPedidos($id_order) {
 }
 
 //función que llama a la página de error
-function muestraError($action, $mensaje_error, $id_order = 0) {
-  //pickpack_log            
-  pickpackLog($id_order, 0, 'error_'.$action, 0, 0, 0, 0, 0, 0, '', $mensaje_error);
-
+function muestraError($action, $mensaje_error) {
   require_once("../views/templates/error.php");
 }
 
@@ -541,8 +538,7 @@ function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obseq
 //$incidencia si el picking o el packing se cierran como incidencia (1) o todo ok (0)
 //$cancelar si se salió pulsando cancelar
 //$mensaje_error_cambio es el mensaje que se muesatra al usuario si al finalizar packing hay problemas al intentar insertar el pedido/s para cambio de estado
-//$mensaje_error es el mensaje que se muestra en error,php cuando se pasa por la función muestraError()
-function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_apertura = 0, $cerrar = 0, $incidencia = 0, $cancelar = 0, $login = 0, $mensaje_error_cambio = '', $mensaje_error = '') {
+function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_apertura = 0, $cerrar = 0, $incidencia = 0, $cancelar = 0, $login = 0, $mensaje_error_cambio = '') {
   //$id_empleado y $nombre_empleado los sacamos de $_SESSION
   $id_empleado = $_SESSION['id_empleado'];
   $nombre_empleado = $_SESSION['nombre_empleado'];
@@ -573,7 +569,6 @@ function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_ap
   incidencia,
   cancelar,
   error_cambio_estado,
-  mensaje_error,
   date_add)
   VALUES
   ($id_order,
@@ -591,7 +586,6 @@ function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_ap
   $incidencia,
   $cancelar,
   '$mensaje_error_cambio',
-  '$mensaje_error',
   NOW())";
 
   Db::getInstance()->Execute($sql_insert_pickpack_log);

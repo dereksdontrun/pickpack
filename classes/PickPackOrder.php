@@ -289,6 +289,18 @@ class PickPackOrder extends ObjectModel
         return $id_pickpack;
     }
 
+    //30/11/2022 para obtener el id de estado pickpack para log
+    public static function getIdEstadoPickPackByIdOrder($id_order)
+    {
+        $id_estado_order = Db::getInstance()->getValue('
+            SELECT id_estado_order
+            FROM lafrips_pick_pack
+            WHERE id_pickpack_order ='.$id_order.';'
+            );
+        return $id_estado_order;
+    }
+
+
     // public function __construct($id = null) {
     //     Shop::addTableAssociation(self::$definition['table'], array('type' => 'shop'));
     //     parent::__construct($id);
