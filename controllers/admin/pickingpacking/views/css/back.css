@@ -189,6 +189,38 @@ blockquote.nota_cliente {
     margin-top: 3px !important;
 }
 
+.boton_ubicaciones {
+    font-size: 24px !important;
+    line-height: 1.33 !important;
+    border-radius: 6px !important;
+
+    color: #fff !important;
+    background-color: #ff7f27 !important;
+    border-color: #bf5b16 !important;
+
+    box-shadow: 0 3px 0 0 #ffb27d !important;
+
+    padding: 14px 24px;
+    border: 0 none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.boton_ubicaciones:active, .boton_ubicaciones.active {
+    background: #ffcca9 !important;
+    box-shadow: none !important;
+    margin-bottom: -3px !important;
+    margin-top: 3px !important;
+}
+
+.jumbotron_ubicaciones {    
+    background-color: #ff7f27 !important; 
+    color: white;  
+}
+
+
+
 .mayusculas {
     text-transform: uppercase;
 }
@@ -199,4 +231,19 @@ blockquote.nota_cliente {
 }
 .cajaB {
     background: #e2eec6 !important;    
+}
+
+/* estilos para card de ubicaciones. Cambiamos tamaño foto y padding solo para menos de 576px*/
+@media (max-width: 576px) {
+    .card-img, .card-img-bottom, .card-img-top {	
+        width: 65% !important;    
+    }
+    
+    .card-body {	
+        padding: 0 !important;    
+    }
+}
+
+.card {
+    border: none !important;
 }

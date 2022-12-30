@@ -83,6 +83,15 @@ if (isset($_POST['submit_hacer_picking'])){
     header("Location: $url");
   }
 
+} elseif(isset($_POST['submit_ubicaciones'])){
+  $id_usuario = $_POST['usuario'];
+
+  $token = Tools::getAdminTokenLite('AdminModules');
+  $url_modulos = _MODULE_DIR_;
+
+  $url = $url_modulos.'pickpack/controllers/admin/pickingpacking/controllers/ubicaciones.php?token='.$token.'&id_empleado='.$id_usuario;  
+  //echo '<br>'.$url;
+  header("Location: $url");
 } else {    
   //comprobamos si venimos del botón de Cerrar Sesión por el GET
   if (isset($_GET['cerrar_sesion']) && $_GET['cerrar_sesion'] == 1) {    

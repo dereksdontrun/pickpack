@@ -26,6 +26,9 @@ include('header.php');
             <br><br>
             <button type="submit" name="submit_hacer_picking" class="btn boton_picking">Picking</button>
             <button type="submit" name="submit_hacer_packing" class="btn boton_packing">Packing</button>
+            <!-- 28/11/2022 Añadimos botón para ubicaciones -->
+            <br><br>
+            <button type="submit" name="submit_ubicaciones" class="btn boton_ubicaciones">Ubicaciones</button>
             <!-- 25/11/2022 Para quitar la posibilidad de procesar varios pedidos basta con comentar los botones de debajo -->
             <br><br>
             <p class="lead">Para preparar pedidos por cliente:</p>

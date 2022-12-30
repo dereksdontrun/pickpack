@@ -10,11 +10,11 @@ include('header.php');
         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"><?= $_SESSION["nombre_empleado"] ?>
         <span class="caret"></span></button>
         <ul class="dropdown-menu">
-        <li><a href="<?= _MODULE_DIR_.'pickpack/controllers/admin/pickingpacking/pickpackindex.php?cerrar_sesion=1'; ?>">  Cerrar Sesión</a></li>              
+        <li><a class="dropdown-item" href="<?= _MODULE_DIR_.'pickpack/controllers/admin/pickingpacking/pickpackindex.php?cerrar_sesion=1'; ?>">  Cerrar Sesión</a></li>              
         </ul>
 
     </h1>
-    <!-- <p class="lead">El pedido que buscas no está disponible para <?= $action ?></p> -->
+    <!-- <p class="lead">El pedido que buscas no está disponible para < ?php $action ?></p> -->
     <?php
     if ($mensaje_error){
     ?>
@@ -23,8 +23,9 @@ include('header.php');
     }
     ?>
 
-    <!-- coloco 0 como número de pedido en un input hidden para el proceso del log, si volvemos desde aquí no sería cancelar un p@cking si no volver desde error -->
+    <!-- coloco 0 como número de pedido en un input hidden para el proceso del log, si volvemos desde aquí no sería cancelar un p@cking si no volver desde error. Lo mismo con ubicacion, ponemos producto 0 -->
     <input type="hidden" name="id_pedido" value="0">
+    <input type="hidden" name="id_producto" value="0">
 
     <div class="container" style="margin-bottom:10px;">  
         <form action="<?= $action ?>.php" method="post">      
