@@ -19,7 +19,7 @@ if(isset($_GET['id_empleado'])){
             //con los datos del empleado en sesión, mostramos el formulario de búsqueda de producto, un input para ean con el cursor sobre el.            
 
             //localizaciones_log login
-            ubicacionLog('', 0, 0, '', '', '', 1);            
+            // ubicacionLog('', 0, 0, '', '', '', 1);            
 
             require_once("../views/templates/buscaproducto.php");
         } else {
@@ -49,7 +49,7 @@ if(isset($_GET['id_empleado'])){
         }
 
         //hacemos log del ean buscado
-        ubicacionLog('', 0, 0, $ean, '', '', 0, 0, 1);
+        // ubicacionLog('', 0, 0, $ean, '', '', 0, 0, 1);
         
         $busqueda = obtenerProducto($ean);
     } else {
@@ -67,6 +67,7 @@ if(isset($_GET['id_empleado'])){
         //asignamos a la variable para la plantilla y la requerimos
         $producto = $busqueda[1]; 
 
+        //guardamos log de lo mostrado una vez que se ha encontrado el producto
         ubicacionLog($producto['id'], $producto['id_product'], $producto['id_product_attribute'], $producto['ean'], $producto['localizacion'], $producto['reposicion'], 0, 0, 0, 1);
 
         require_once("../views/templates/muestraproducto.php");   
@@ -97,7 +98,7 @@ if(isset($_GET['id_empleado'])){
         $reposicion = trim(pSQL($_POST['input_reposicion']));
         //como no le pasamos preg_match nos aseguramos de que no pasa de 64 caracteres que es lo que admite la BD
         if (strlen($reposicion) > 64) {
-            muestraErrorUbicaciones('Error: ubicación de reposición demasiado larga');    
+            muestraErrorUbicaciones('Error: ubicación de reposición demasiado larga (64 caracteres)');    
             return;
         }
     }
@@ -135,13 +136,14 @@ if(isset($_GET['id_empleado'])){
     //localizaciones_log  
     $id_producto = $_POST['id_producto'];   
     // si $id_producto = 0 es que venimos de la pantalla de error, por ejemplo por dar a buscar con el input vacío. No hacemos log ya que para errores lo hacemos en muestraErrorUbicaciones()
-    if ($id_producto) {
-        $ids_producto = explode("_", $id_producto);
-        $id_product = $ids_producto[0];
-        $id_product_attribute = $ids_producto[1];
+    //de moemtno no hacemos log
+    // if ($id_producto) {
+    //     $ids_producto = explode("_", $id_producto);
+    //     $id_product = $ids_producto[0];
+    //     $id_product_attribute = $ids_producto[1];
 
-        ubicacionLog($id_producto, $id_product, $id_product_attribute, '', '', '', 0, 0, 0, 0, 0, 0, 1);
-    }  
+    //     ubicacionLog($id_producto, $id_product, $id_product_attribute, '', '', '', 0, 0, 0, 0, 0, 0, 1);
+    // }  
 
     require_once("../views/templates/buscaproducto.php");
 }
@@ -223,7 +225,7 @@ function checkTablaLocalizaciones($id_product, $id_product_attribute) {
     $existe = Db::getInstance()->ExecuteS($sql_existe); 
 
     if(empty($existe)){
-        $sql_insert_producto = "INSERT INTO lafrips_localizaciones(id_product, id_product_attribute, modificado) 
+        $sql_insert_producto = "INSERT INTO lafrips_localizaciones(id_product, id_product_attribute, date_add) 
         VALUES ($id_product, $id_product_attribute,  NOW())";
 
         Db::getInstance()->ExecuteS($sql_insert_producto);
@@ -253,25 +255,40 @@ function checkIncidencia($id_producto) {
 }
 
 
-//función que recibe los datos de producto e inputs y actualiza tanto loclaización de Prestashop como de tabla lafrips_localizaciones
+//función que recibe los datos de producto e inputs y actualiza tanto loclaización de Prestashop como de tabla lafrips_localizaciones. 
+//vamos a comparar primero la localización actual, si varía localizacion pero no repo actualizamos ambas, si solo varía repo actualizamos tabla localizaciones
 function actualizaLocalizaciones($id_product, $id_product_attribute, $localizacion, $reposicion) {
-    //actualizamos en Prestashop para almacén 1 online
-    WarehouseCore::setProductLocation($id_product, $id_product_attribute, 1, $localizacion);
+    //sacamos location actual en almacén online 1
+    // $localizacion_actual = WarehouseCore::getProductLocation($id_product, $id_product_attribute, 1);
 
-    //después de introducir la localización en lafrips_products, hacerlo en tabla auxiliar lafrips_localizaciones
-    $sql_update_localizacion = "UPDATE lafrips_localizaciones 
-    SET 
-    modificado = NOW(), 
-    p_location = '$localizacion',
-    r_location = '$reposicion' 
-    WHERE id_product = $id_product 
-    AND id_product_attribute = $id_product_attribute";
+    $actual = Db::getInstance()->getRow("SELECT p_location, r_location FROM lafrips_localizaciones WHERE id_product = $id_product AND id_product_attribute = $id_product_attribute");
 
-    if (Db::getInstance()->ExecuteS($sql_update_localizacion)) {
-        return true;
+    $localizacion_actual = $actual['p_location'];
+    
+    $reposicion_actual = $actual['r_location'];
+
+    //hacemos update si alguna es diferente
+    if (($localizacion != $localizacion_actual) || ($reposicion != $reposicion_actual)) {
+        //actualizamos en Prestashop para almacén 1 online
+        WarehouseCore::setProductLocation($id_product, $id_product_attribute, 1, $localizacion);
+
+        //después de introducir la localización en lafrips_products, hacerlo en tabla auxiliar lafrips_localizaciones
+        $sql_update_localizacion = "UPDATE lafrips_localizaciones 
+        SET 
+        date_upd = NOW(), 
+        p_location = '$localizacion',
+        r_location = '$reposicion' 
+        WHERE id_product = $id_product 
+        AND id_product_attribute = $id_product_attribute";
+
+        if (Db::getInstance()->ExecuteS($sql_update_localizacion)) {
+            return true;
+        }
+
+        return false;
     }
 
-    return false;
+    return true;    
 }
 
 
