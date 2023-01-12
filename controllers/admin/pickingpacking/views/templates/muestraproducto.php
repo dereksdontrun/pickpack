@@ -53,7 +53,7 @@ include('header.php');
           <div class="card-body text-center"> 
             <div class="input-group mb-3">
               <span class="input-group-text">Localización</span>
-              <input type="text" class="form-control" name="input_localizacion" value="<?= $producto['localizacion'] ?>" autofocus>
+              <input type="text" class="form-control" name="input_localizacion" value="<?= $producto['localizacion'] ?>" autofocus  onfocus="this.select()"> <!-- autofocus centra el cursor en el input y onfocus.. hace que se seleccione el contenido  -->
             </div>  
             <div class="input-group mb-3">
               <span class="input-group-text">Reposición</span>
