@@ -124,6 +124,10 @@ include('header.php');
         <?php if ($producto['ean'] && $producto['ean'] !== ''){ ?>
           <span>EAN: <?= $producto['ean'] ?></span><br/>
         <?php } ?>
+        <!-- 27/01/2023 Si la fecha de última recepción en pedido de materiales es más reciente que la última ubicación ponemos un mensaje -->
+        <?php if ($producto['area_recepcion']){  ?>
+          <span style="font-size: 17px;" class="badge badge-pill badge-warning">Área de Recepción</span><br>
+        <?php } ?>
         <!-- Si no tiene localización no la ponemos -->
         <?php if ($producto['localizacion'] && $producto['localizacion'] !== ''){  ?>
           <span style="font-size:17px; font-weight:bold;"><?= $producto['localizacion'] ?></span><br/>

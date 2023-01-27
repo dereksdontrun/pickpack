@@ -269,6 +269,42 @@ function infoProducts($id_order, $ids_pedidos, $action, $dropshipping_envio_alma
     //no se han obtenido productos y además es dropshipping con entrega a cliente, enviamos mensaje
     return 'dropshipping';
   } else {
+    //27/01/2023 Queremos revisar los productos para añadir otro parámetro que indica que el producto podría estar en la zona de recepción sin colocar en su localización de almacén. Esto sucedería si, suponiendo que se trabaja correctamente, la fecha de la última ubicación en lafrips_localizaciones_log es anterior a la fecha de última recepción del producto en un pedido de materiales. De modo que sacamos por cada producto en $productos_pedido esas dos fechas, que podrían ser nulas una o ambas. Se comparan y se añade un nuevo campo.
+    foreach ($productos_pedido AS &$producto) {
+      $id_product = $producto['id_producto'];
+      $id_product_attribute = $producto['id_atributo'];
+
+      //sacamos la última fecha de ubicación
+      $sql_date_ubicacion = "SELECT date_add 
+      FROM lafrips_localizaciones_log 
+      WHERE id_product = $id_product
+      AND id_product_attribute = $id_product_attribute
+      AND submit_ok = 1
+      ORDER BY date_add DESC";
+
+      $date_ubicacion = Db::getInstance()->getValue($sql_date_ubicacion);
+
+      //obtenemos la fecha del último movimiento de stock positivo del producto, que corresponda a un pedido de materiales, asegurándonos de que se miran todos los stocks del producto.
+      $sql_date_pedido_materiales = "SELECT date_add
+      FROM lafrips_stock_mvt
+      WHERE id_stock_mvt_reason = 8
+      AND id_stock IN (
+        SELECT id_stock FROM lafrips_stock WHERE id_product = $id_product AND id_product_attribute = $id_product_attribute
+      )
+      ORDER BY date_add DESC";
+
+      $date_pedido_materiales = Db::getInstance()->getValue($sql_date_pedido_materiales);
+
+      //si alguna fecha es nula o la de ubicación es más reciente que la de pedido de materiales, devolvemos el parámetro con valor 0, si no con 1
+      if ((is_null($date_pedido_materiales) || empty($date_pedido_materiales)) || (is_null($date_ubicacion) || empty($date_ubicacion)) || ($date_ubicacion > $date_pedido_materiales)) {
+        $producto['area_recepcion'] = 0;
+      } elseif ($date_ubicacion < $date_pedido_materiales) {
+        $producto['area_recepcion'] = 1;
+      } else {
+        $producto['area_recepcion'] = 0;
+      }
+    }
+
     return $productos_pedido;
   }
 
