@@ -295,14 +295,15 @@ function infoProducts($id_order, $ids_pedidos, $action, $dropshipping_envio_alma
 
       $date_pedido_materiales = Db::getInstance()->getValue($sql_date_pedido_materiales);
 
-      //si alguna fecha es nula o la de ubicación es más reciente que la de pedido de materiales, devolvemos el parámetro con valor 0, si no con 1
-      if ((is_null($date_pedido_materiales) || empty($date_pedido_materiales)) || (is_null($date_ubicacion) || empty($date_ubicacion)) || ($date_ubicacion > $date_pedido_materiales)) {
-        $producto['area_recepcion'] = 0;
-      } elseif ($date_ubicacion < $date_pedido_materiales) {
-        $producto['area_recepcion'] = 1;
-      } else {
-        $producto['area_recepcion'] = 0;
-      }
+      //si la fecha de pedido de materiales es nula, o si las dos son nulas, o existiendo ambas la de ubicación es más reciente que la de pedido de materiales, devolvemos el parámetro con valor 0, si no con 1. Es decir, se devuelve 1 si ubicación es nula y pedido materiales no, o si no son nulas y ubicación es más antigua que pedidos materiales
+      $producto['area_recepcion'] = 0;
+
+      if ((!is_null($date_pedido_materiales) && !empty($date_pedido_materiales) && $date_pedido_materiales != "0000-00-00 00:00:00")) {
+        //$pedido_de_materiales existe y no es 0. Comprobamos $date_ubicacion, si es nula o más antigua, enviamos 1
+        if ((is_null($date_ubicacion) || empty($date_ubicacion) || $date_ubicacion == "0000-00-00 00:00:00") || ($date_ubicacion < $date_pedido_materiales)) {
+          $producto['area_recepcion'] = 1;
+        }
+      }          
     }
 
     return $productos_pedido;
