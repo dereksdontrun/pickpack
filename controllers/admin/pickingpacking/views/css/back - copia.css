@@ -235,41 +235,8 @@ blockquote.nota_cliente {
 
 /* estilos para card de ubicaciones. Cambiamos tamaño foto y padding solo para menos de 576px*/
 @media (max-width: 576px) {
-
     .card-img, .card-img-bottom, .card-img-top {	
         width: 65% !important;    
-    }
-    /* Si la pantalla tiene menos de 530px de alto ponemos la imagen más pequeña y a la izquierda, de modo que queda el nombre junto a la imagen, y a la clase que tiene los botones e inputs les aplicamos los css de botón pequeño e input pequeño de bootstrap */
-    @media (max-height: 530px) { 
-        .card-img, .card-img-bottom, .card-img-top {	
-            width: 45% !important; 
-            float: left;   
-        }
-        .card-body {
-            margin: 0px !important;
-            padding: 0px !important;
-        }
-        /* css del btn-sm de bootstrap */
-        .btn_ubicacion {
-            padding: .25rem .5rem !important;
-            font-size: .875rem !important;
-            line-height: 1.5 !important;
-            border-radius: 0.2rem !important;
-        }
-        /* css del input-sm de bootstrap */
-        .input_ubicacion {
-            height: 30px !important;
-            padding: 5px 10px !important;
-            font-size: 12px !important;
-            line-height: 1.5 !important;
-            border-radius: 3px !important;
-        }
-        /* Para el span de arriba Ubicaciones */
-        .span_ubicacion {
-            font-size: 1rem !important;
-            font-weight: 400 !important;
-            line-height: 1.5 !important;
-        }
     }
     
     .card-body {	

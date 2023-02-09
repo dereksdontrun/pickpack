@@ -6,9 +6,9 @@ include('header.php');
 <!-- Cabecera -->
 <nav class="navbar bg-body-tertiary jumbotron_ubicaciones">
   <div class="container-fluid">
-    <span class="navbar-brand mb-0 h1">Ubicaciones</span>
+    <span class="navbar-brand mb-0 h1 span_ubicacion">Ubicaciones</span>
     <div class="dropdown-center">
-      <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"><?= $_SESSION["nombre_empleado"] ?>
+      <button class="btn btn-primary dropdown-toggle btn_ubicacion" type="button" data-toggle="dropdown"><?= $_SESSION["nombre_empleado"] ?>
       <span class="caret"></span></button>
       <ul class="dropdown-menu">
         <!-- quito variable get ?cerrar_sesion=1 de momento -->
@@ -52,21 +52,21 @@ include('header.php');
         <form id="formulario_ubicaciones" action="ubicaciones.php" method="post">
           <div class="card-body text-center"> 
             <div class="input-group mb-3">
-              <span class="input-group-text">Localización</span>
-              <input type="text" class="form-control" name="input_localizacion" value="<?= $producto['localizacion'] ?>" autofocus  onfocus="this.select()"> <!-- autofocus centra el cursor en el input y onfocus.. hace que se seleccione el contenido  -->
+              <span class="input-group-text input_ubicacion">Localización</span>
+              <input type="text" class="form-control input_ubicacion" name="input_localizacion" value="<?= $producto['localizacion'] ?>" autofocus  onfocus="this.select()"> <!-- autofocus centra el cursor en el input y onfocus.. hace que se seleccione el contenido  -->
             </div>  
             <div class="input-group mb-3">
-              <span class="input-group-text">Reposición</span>
-              <input type="text" class="form-control" name="input_reposicion" value="<?= $producto['reposicion'] ?>">
+              <span class="input-group-text input_ubicacion">Reposición</span>
+              <input type="text" class="form-control input_ubicacion" name="input_reposicion" value="<?= $producto['reposicion'] ?>">
             </div>
             <!-- coloco el id d producto en un input hidden para el proceso de actualización. Va compuesto de id_product e id_product_attribute -->
             <input type="hidden" name="id_producto" value="<?= $producto['id'] ?>">
           </div>
           <div class="card-body text-center">
             <div class="btn-group btn-group-lg" role="group">
-              <button type="submit" class="btn btn-success btn-outline-light" name="submit_producto_ok">OK</button>
-              <button type="submit" class="btn btn-warning btn-outline-light" name="submit_volver">Volver</button>
-              <button type="submit" class="btn btn-danger btn-outline-light" name="submit_producto_incidencia">Incidencia</button>
+              <button type="submit" class="btn btn-success btn-outline-light btn_ubicacion" name="submit_producto_ok">OK</button>
+              <button type="submit" class="btn btn-warning btn-outline-light btn_ubicacion" name="submit_volver">Volver</button>
+              <button type="submit" class="btn btn-danger btn-outline-light btn_ubicacion" name="submit_producto_incidencia">Incidencia</button>
             </div>
           </div>
         </form>
