@@ -8,7 +8,7 @@ include('header.php');
   <div class="container-fluid">
     <span class="navbar-brand mb-0 h1 span_ubicacion">Ubicaciones</span>
     <div class="dropdown-center">
-      <button class="btn btn-primary dropdown-toggle btn_ubicacion" type="button" data-toggle="dropdown"><?= $_SESSION["nombre_empleado"] ?>
+      <button class="btn btn-primary dropdown-toggle btn_ubicacion_logout" type="button" data-toggle="dropdown"><?= $_SESSION["nombre_empleado"] ?>
       <span class="caret"></span></button>
       <ul class="dropdown-menu">
         <!-- quito variable get ?cerrar_sesion=1 de momento -->
@@ -68,6 +68,15 @@ include('header.php');
               <button type="submit" class="btn btn-warning btn-outline-light btn_ubicacion" name="submit_volver">Volver</button>
               <button type="submit" class="btn btn-danger btn-outline-light btn_ubicacion" name="submit_producto_incidencia">Incidencia</button>
             </div>
+              <!-- Prueba para sacar las dimensiones de la pantalla del móvil y poder poner el css acorde para que salga todo a la vez -->
+              <!-- <div id="medidas"></div>
+              <script>
+              let text = "Total width/height: " + screen.width + "*" + screen.height + "<br>" +
+              "Available width/height: " + screen.availWidth + "*" + screen.availHeight + "<br>";
+
+              document.getElementById("medidas").innerHTML = text;
+              </script> -->
+
           </div>
         </form>
       </div>

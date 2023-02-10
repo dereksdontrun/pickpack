@@ -239,8 +239,9 @@ blockquote.nota_cliente {
     .card-img, .card-img-bottom, .card-img-top {	
         width: 65% !important;    
     }
-    /* Si la pantalla tiene menos de 530px de alto ponemos la imagen más pequeña y a la izquierda, de modo que queda el nombre junto a la imagen, y a la clase que tiene los botones e inputs les aplicamos los css de botón pequeño e input pequeño de bootstrap */
-    @media (max-height: 530px) { 
+    /* Si la pantalla tiene menos de 650 de alto ponemos la imagen más pequeña y a la izquierda, de modo que queda el nombre junto a la imagen, y a la clase que tiene los botones e inputs les aplicamos los css de botón pequeño e input pequeño de bootstrap.
+    Los móviles pequeños delñ almacén parece que tienen 360*640, así que ponemos max 650 */
+    @media (max-height: 650px) { 
         .card-img, .card-img-bottom, .card-img-top {	
             width: 45% !important; 
             float: left;   
@@ -249,8 +250,15 @@ blockquote.nota_cliente {
             margin: 0px !important;
             padding: 0px !important;
         }
-        /* css del btn-sm de bootstrap */
-        .btn_ubicacion {
+        /* css del btn-sm de bootstrap 
+            Al final no hace falta reducir estos botones, pero el de logout lo dejo debajo */
+        /* .btn_ubicacion {
+            padding: .25rem .5rem !important;
+            font-size: .875rem !important;
+            line-height: 1.5 !important;
+            border-radius: 0.2rem !important;
+        } */
+        .btn_ubicacion_logout {
             padding: .25rem .5rem !important;
             font-size: .875rem !important;
             line-height: 1.5 !important;
