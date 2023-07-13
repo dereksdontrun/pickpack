@@ -29,11 +29,14 @@ include('header.php');
             <!-- 28/11/2022 Añadimos botón para ubicaciones -->
             <br><br>
             <button type="submit" name="submit_ubicaciones" class="btn boton_ubicaciones">Ubicaciones</button>
-            <!-- 25/11/2022 Para quitar la posibilidad de procesar varios pedidos basta con comentar los botones de debajo -->
+            <!-- 06/07/2023 Añadimos botón para recepciones -->
             <br><br>
+            <button type="submit" name="submit_recepciones" class="btn boton_recepciones">Recepciones</button>
+            <!-- 25/11/2022 Para quitar la posibilidad de procesar varios pedidos basta con comentar los botones de debajo -->
+            <!-- <br><br>
             <p class="lead">Para preparar pedidos por cliente:</p>
             <button type="submit" name="submit_picking_varios" class="btn boton_picking">Picking Varios</button>
-            <button type="submit" name="submit_packing_varios" class="btn boton_packing">Packing Varios</button>
+            <button type="submit" name="submit_packing_varios" class="btn boton_packing">Packing Varios</button> -->
             <!-- 25/11/2022 Comentar hasta aquí -->
         </div>
         </form>      

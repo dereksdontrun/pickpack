@@ -219,6 +219,35 @@ blockquote.nota_cliente {
     color: white;  
 }
 
+.boton_recepciones {
+    font-size: 24px !important;
+    line-height: 1.33 !important;
+    border-radius: 6px !important;
+
+    color: #fff !important;
+    background-color: #c56fc6 !important;
+    border-color: #a03da1 !important;
+
+    box-shadow: 0 3px 0 0 #7a297b !important;
+
+    padding: 14px 24px;
+    border: 0 none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.boton_recepciones:active, .boton_recepciones.active {
+    background: #daaadb !important;
+    box-shadow: none !important;
+    margin-bottom: -3px !important;
+    margin-top: 3px !important;
+}
+
+.jumbotron_recepciones {    
+    background-color: #c56fc6 !important; 
+    color: white;  
+}
 
 
 .mayusculas {
@@ -233,11 +262,16 @@ blockquote.nota_cliente {
     background: #e2eec6 !important;    
 }
 
-/* estilos para card de ubicaciones. Cambiamos tamaño foto y padding solo para menos de 576px*/
+/* estilos para card de ubicaciones. Cambiamos tamaño foto y padding solo para menos de 576px, en caso de estar procesando recepciones reducimos aún más el tamaño de la imagen*/
 @media (max-width: 576px) {
 
     .card-img, .card-img-bottom, .card-img-top {	
         width: 65% !important;    
+    }
+
+    .img-recepciones {
+        width: 45% !important; 
+        /* float: left;  */
     }
     /* Si la pantalla tiene menos de 650 de alto ponemos la imagen más pequeña y a la izquierda, de modo que queda el nombre junto a la imagen, y a la clase que tiene los botones e inputs les aplicamos los css de botón pequeño e input pequeño de bootstrap.
     Los móviles pequeños delñ almacén parece que tienen 360*640, así que ponemos max 650 */
@@ -246,26 +280,32 @@ blockquote.nota_cliente {
             width: 45% !important; 
             float: left;   
         }
+
+        .img-recepciones {
+            width: 35% !important; 
+            /* float: left !important;  */
+        }
+
         .card-body {
             margin: 0px !important;
             padding: 0px !important;
         }
         /* css del btn-sm de bootstrap 
             Al final no hace falta reducir estos botones, pero el de logout lo dejo debajo */
-        /* .btn_ubicacion {
+        /* .btn_ubicaciones {
             padding: .25rem .5rem !important;
             font-size: .875rem !important;
             line-height: 1.5 !important;
             border-radius: 0.2rem !important;
         } */
-        .btn_ubicacion_logout {
+        .btn_ubicaciones_logout {
             padding: .25rem .5rem !important;
             font-size: .875rem !important;
             line-height: 1.5 !important;
             border-radius: 0.2rem !important;
         }
         /* css del input-sm de bootstrap */
-        .input_ubicacion {
+        .input_ubicaciones {
             height: 30px !important;
             padding: 5px 10px !important;
             font-size: 12px !important;
@@ -273,7 +313,7 @@ blockquote.nota_cliente {
             border-radius: 3px !important;
         }
         /* Para el span de arriba Ubicaciones */
-        .span_ubicacion {
+        .span_ubicaciones {
             font-size: 1rem !important;
             font-weight: 400 !important;
             line-height: 1.5 !important;
@@ -283,8 +323,48 @@ blockquote.nota_cliente {
     .card-body {	
         padding: 0 !important;    
     }
+    
 }
+
+.col_ubicaciones {
+    padding-left: 1px !important; 
+    padding-right: 1px !important; 
+}
+
+.col_ubicaciones_right {    
+    padding-right: 5px !important; 
+    margin-right: 1px !important; 
+}
+
+.card-recepciones {	
+    padding-top: 2px !important; 
+    margin-top: 2px !important; 
+    padding-bottom: 0 !important; 
+    margin-bottom: 0 !important;   
+}
+
+.input-group-recepciones {	
+    padding-top: 1px !important; 
+    margin-top: 1px !important; 
+    padding-bottom: 1px !important; 
+    margin-bottom: 1px !important;   
+} 
 
 .card {
     border: none !important;
 }
+
+.capitalizar {
+    text-transform: capitalize;
+}
+
+/* .panel_pedido_materiales {
+    padding: 10px;
+    border: 1px;
+    border-radius: 5px;
+    margin-bottom:5px;
+}
+
+.cabecera_pedido_materiales {
+    background-color: rgb(240, 151, 151);
+} */

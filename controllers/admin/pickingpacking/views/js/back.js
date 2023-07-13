@@ -138,9 +138,56 @@ $(function(){
     //         $('#span_picking_obsequio_no').show(); 
     //         $('#checkbox_picking_obsequio').prop("checked", false);  
     //     });
+    
 
 });
 
+$(document).ready(function() {
+    //ponemos el color de fondo del input en función de si el valor es 0 o superior
+    if ($("#input_unidades_esperadas").val() < 1) {
+        $("#input_unidades_esperadas").css("background-color","#F8A1A4");
+    }
+    
+    //11/07/2023 Para Rececpcionador. Cuando el select de pedido de materiales cambie, obtenemos el value de la opción elegida y sacamos la cantidad y la ponemos en el input de unidades esperadas. Además ponemos en el span de unidades recibidas / esperadas los valores necesarios también.
+    //recibimos 'idsupplier_unidadesesperadas_unidadesrecibidas_unidadesesperadasreales'    
+    $("#select_pedido_materiales").change(function(){          
+        $("#input_unidades_esperadas").val(this.value.split("_")[3]);
+        $("#span_esperadas_recibidas").text(this.value.split("_")[2]+' / '+this.value.split("_")[1]);
+        
+        //ponemos el color de fondo del input en función de si el valor es 0 o superior
+        if (this.value.split("_")[3] < 1) {
+            $("#input_unidades_esperadas").css("background-color","#F8A1A4");
+        } else {
+            $("#input_unidades_esperadas").css("background-color","#FFFFFF");
+        }
+    });
+
+
+    //revisamos que se reciban cantidades positivas, y avisamos cuando se supone que ya se ha recibido una cantidad superior a la esperada
+    $('#formulario_ubicaciones').submit(function(event) {
+        var submittedButton = $(document.activeElement);
+        //seguimos si se ha hecho submit de ok, volver o incidencia no cuentan
+        if (submittedButton.attr('name') == 'submit_producto_ok') {
+            //sacamos las unidades a recibir, las unidades esperadas en pedido de materiales y las supuestamente ya recibidas (guardadas en el value de la opción del select separadas por "_")
+            //para asegurarnos de operar con números hacemos parseInt, en base 10, decimal
+            var unidades_a_recibir = parseInt($("#input_unidades_esperadas").val(), 10);
+            var select_value = $("#select_pedido_materiales").val().split("_");
+            var unidades_esperadas = parseInt(select_value[1], 10);
+            var unidades_ya_recibidas = parseInt(select_value[2], 10);
+            console.log ('-unidades_a_recibir:'+unidades_a_recibir+' -unidades_esperadas:'+unidades_esperadas+' -unidades_ya_recibidas:'+unidades_ya_recibidas);
+            //si unidades a recibir es menor que 1 mostramos alert y no permitimos seguir. 
+            if (unidades_a_recibir < 1) {
+                alert('Error: La cantidad a recibir ha de ser positiva');
+                event.preventDefault(); 
+            } else if ((unidades_a_recibir + unidades_ya_recibidas) > unidades_esperadas) {
+                //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
+                if(!confirm("Atención, ¿Quieres recepcionar más unidades de las esperadas?")){
+                    event.preventDefault();
+                }
+            }
+        }              
+    });
+});
 
 // $(function(){
 

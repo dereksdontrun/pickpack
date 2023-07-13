@@ -83,20 +83,32 @@ if (isset($_POST['submit_hacer_picking'])){
     header("Location: $url");
   }
 
-} elseif(isset($_POST['submit_ubicaciones'])){
+} elseif(isset($_POST['submit_ubicaciones'])){ //06/07/2023 Desde el submit de ubicaciones llamamos a ubicaciones con GET funcionalidad ubicaciones
   $id_usuario = $_POST['usuario'];
 
   $token = Tools::getAdminTokenLite('AdminModules');
   $url_modulos = _MODULE_DIR_;
 
-  $url = $url_modulos.'pickpack/controllers/admin/pickingpacking/controllers/ubicaciones.php?token='.$token.'&id_empleado='.$id_usuario;  
+  $url = $url_modulos.'pickpack/controllers/admin/pickingpacking/controllers/ubicaciones.php?token='.$token.'&id_empleado='.$id_usuario.'&funcionalidad=ubicaciones';  
+  //echo '<br>'.$url;
+  header("Location: $url");
+
+} elseif(isset($_POST['submit_recepciones'])){ //06/07/2023 Desde el submit de recepciones llamamos a ubicaciones con GET funcionalidad recepciones
+  $id_usuario = $_POST['usuario'];
+
+  $token = Tools::getAdminTokenLite('AdminModules');
+  $url_modulos = _MODULE_DIR_;
+
+  $url = $url_modulos.'pickpack/controllers/admin/pickingpacking/controllers/ubicaciones.php?token='.$token.'&id_empleado='.$id_usuario.'&funcionalidad=recepciones'; 
   //echo '<br>'.$url;
   header("Location: $url");
 } else {    
   //comprobamos si venimos del botón de Cerrar Sesión por el GET
-  if (isset($_GET['cerrar_sesion']) && $_GET['cerrar_sesion'] == 1) {    
+  if (isset($_GET['cerrar_sesion']) && $_GET['cerrar_sesion'] == 1) {  
     //hacemos log
     pickpackLog(0, 0, 'cerrar_sesion');
+
+    session_destroy(); 
   }
   //enviamos a login
   $token = Tools::getAdminTokenLite('AdminModules');

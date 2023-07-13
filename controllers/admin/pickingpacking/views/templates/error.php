@@ -5,7 +5,7 @@ include('header.php');
 ?>
 
 <div class="jumbotron jumbotron_error">
-    <h1 class="display-4">Hola <?= $_SESSION["nombre_empleado"] ?> 
+    <h1 class="display-5">Hola <?= $_SESSION["nombre_empleado"] ?> 
         
         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"><?= $_SESSION["nombre_empleado"] ?>
         <span class="caret"></span></button>
@@ -18,7 +18,7 @@ include('header.php');
     <?php
     if ($mensaje_error){
     ?>
-    <p class="lead"><?= $mensaje_error ?></p><br>
+    <p class="lead"><?= $mensaje_error ?></p>
     <?php
     }
     ?>

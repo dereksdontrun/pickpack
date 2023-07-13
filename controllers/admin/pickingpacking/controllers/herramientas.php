@@ -583,7 +583,7 @@ function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_ap
   //$id_empleado y $nombre_empleado los sacamos de $_SESSION
   $id_empleado = $_SESSION['id_empleado'];
   $nombre_empleado = $_SESSION['nombre_empleado'];
-  $varios = $_SESSION['varios'];
+  $varios = isset($_SESSION['varios']) ? $_SESSION['varios'] : 0;
 
   if ($id_order) {
     $id_estado_pickpack = PickPackOrder::getIdEstadoPickPackByIdOrder($id_order);
@@ -635,6 +635,18 @@ function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_ap
 
   return;
 
+}
+
+//función que recibe ids de producto y devuelve su ean
+function getProductEan($id_product, $id_product_attribute) {
+  $sql_busca_ean = "SELECT IFNULL(pat.ean13, pro.ean13) AS ean13
+  FROM lafrips_product pro
+  LEFT JOIN lafrips_stock_available ava ON ava.id_product = pro.id_product
+  LEFT JOIN lafrips_product_attribute pat ON pat.id_product = ava.id_product AND pat.id_product_attribute = ava.id_product_attribute
+  WHERE pro.id_product = $id_product
+  AND ava.id_product_attribute = $id_product_attribute";
+  
+  return Db::getInstance()->getValue($sql_busca_ean);  
 }
 
 

@@ -4,17 +4,21 @@ include('herramientas.php');
 
 //28/12/2022 Aquí procesaremos las ubicaciones
 
-//si llegamos desde pickpackindex tras pasar por el login
-if(isset($_GET['id_empleado'])){
+//si llegamos desde pickpackindex tras pasar por el login, existirá el parámetro GET en la url con el id de empleado. Solo debe estar si venimos desde login, ya que $_SESSION["funcionalidad"] solo debe ponerse una vez
+//11/07/2023 Vamos a utilizar este controlador para ubicaciones y recepciones. Recepciones será una versión ampliada de ubicaciones. Además de ubicar, tendrá un input de cantidad recibida y un select para el pedido de materiales al que corrsponde. Llegamos aquí desde login, con un GET con el id de usuario, y otro GET funcionalidad, que indica si hacemos rececpión o solo ubicación, lo que creará la sesión con una funcionalidad u otra, que es lo que mostrará unos inputs y colores u otros.
+
+if (isset($_GET['id_empleado']) && isset($_GET['funcionalidad'])){
 
     $id_empleado = $_GET['id_empleado'];
+    $funcionalidad = $_GET['funcionalidad'];
 
-    if ($id_empleado){
+    if ($id_empleado && $funcionalidad){
         if ($nombre_empleado = obtenerEmpleado($id_empleado)) {
             //almaceno en una sesión el id y nombre del empleado para usarlo después 
             session_start();
             $_SESSION["id_empleado"] = $id_empleado;
-            $_SESSION["nombre_empleado"] = $nombre_empleado;                     
+            $_SESSION["nombre_empleado"] = $nombre_empleado;  
+            $_SESSION["funcionalidad"] = $funcionalidad;                    
 
             //con los datos del empleado en sesión, mostramos el formulario de búsqueda de producto, un input para ean con el cursor sobre el.            
 
@@ -37,11 +41,24 @@ if(isset($_GET['id_empleado'])){
     }   
 
 
-} elseif (isset($_POST['submit_ean'])) {
+} elseif (!isset($_SESSION['id_empleado']) || empty($_SESSION['id_empleado']) 
+        || !isset($_SESSION['nombre_empleado']) || empty($_SESSION['nombre_empleado']) 
+        || !isset($_SESSION['funcionalidad']) || empty($_SESSION['funcionalidad'])){  //entramos al controlador, o bien desde login con GET de empleado y funcionalidad, o con sesión abierta. Si no hay GET ni sesión, volvemos a login
+
+            $token = Tools::getAdminTokenLite('AdminModules');
+            $url_modulos = _MODULE_DIR_;
+            
+            $url = $url_modulos.'pickpack/controllers/admin/pickingpacking/pickpackindex.php?token='.$token;  
+            
+            header("Location: $url");
+}
+
+//en este punto estamos trabajanod con ubicaciones o recpeciones+ubicaciones y tenemos una sesión abierta
+if (isset($_POST['submit_ean'])) {
     //llegamos del formulario de buscar producto por ean
     if ($_POST['ean'] && $_POST['ean'] != '') {
         $ean = trim(pSQL($_POST['ean']));  
-        
+        // var_dump($_POST);
         if (strlen($ean) > 13) {
             //no se ha introducido nada en el formulario
             muestraErrorUbicaciones('El Ean introducido tiene longitud mayor de 13 (no es Ean)');  
@@ -70,10 +87,26 @@ if(isset($_GET['id_empleado'])){
         //guardamos log de lo mostrado una vez que se ha encontrado el producto
         ubicacionLog($producto['id'], $producto['id_product'], $producto['id_product_attribute'], $producto['ean'], $producto['localizacion'], $producto['reposicion'], 0, 0, 0, 1);
 
+        //si estamos en Recepciones, buscamos el pedido de materiales donde se encunetre el pedido, llamando a la función de rececpciones.php
+        if ($_SESSION["funcionalidad"] == 'recepciones') {
+            $busqueda_recepcion = obtenerPedidoMateriales($ean);
+
+            //obtenerPedidoMateriales devuelve un array. El primer campo es "error". Si vale 1, en el segundo campo contendrá el mensaje de error, si vale 0 contendrá la info del/los pedidos de materiales. Si devuelve error, probablemente que no encuentra el ean en ningún pedido de materiales, llamamos a error.php, interrumpiendo tanto la ubicación como la recepción
+            if ($busqueda_recepcion[0]) {
+                //enviamos la variable que contiene la descripción del error
+                muestraErrorUbicaciones($busqueda_recepcion[1]);    
+                return;    
+            } else {        
+                //añadimos a la variable para la plantilla
+                $producto['pedidos_materiales'] = $busqueda_recepcion[1]; 
+            }
+        }
+
         require_once("../views/templates/muestraproducto.php");   
     }    
 
-} elseif (isset($_POST['submit_producto_ok'])) {
+} elseif (isset($_POST['submit_producto_ok'])) { 
+    // var_dump($_POST);
     //o bien se ha pulsado el botón OK o se ha pulsado Return mediante el escaner de forma automática. Por defecto se "pulsa" el primer botón, en este caso OK. Leemos los valores de los inputs de localización y repo y los actualizamos en el producto.
     if ($_POST['id_producto']){
         //sacamos id_product e id_product_attribute
@@ -109,13 +142,53 @@ if(isset($_GET['id_empleado'])){
         muestraErrorUbicaciones('Error: el formato de la localización es incorrecto<br>Solo puede componerse de hasta 9 números y letras');    
         return;
     } else {        
-        //hacemos log de lo contenido en los input una vez comprobado que los formatos son correctos
-        ubicacionLog($_POST['id_producto'], $id_product, $id_product_attribute, '', $localizacion, $reposicion, 0, 0, 0, 0, 1);
+        //comprobados los parámetros referidos a localización, son correctos, miramos si sesión nos indica que estamos haciendo rececpción y si es así sacamos también los datos para ello
+        //hacemos log de lo contenido en los input una vez comprobado que los formatos son correctos. El retorno lo metemos en id_localizaciones_log. Si estamos en recepciones lo guardaremos en tabla recepciones
+        $id_localizaciones_log = ubicacionLog($_POST['id_producto'], $id_product, $id_product_attribute, '', $localizacion, $reposicion, 0, 0, 0, 0, 1);
 
         //$localizacion contiene algo y encaja en regex, lo metemos en location, o está vacio y por tanto lo vaciamos 
         if (actualizaLocalizaciones($id_product, $id_product_attribute, $localizacion, $reposicion)) {
             //localizaciones actualizadas, mostramos formulario para siguiente producto. Enviamos mensaje de OK            
-            $mensaje_ok = 1;
+            $mensaje_ok_ubicacion = 1;
+
+            //con la ubicación gestionada pasamos a almacenar la información de recepción antes de continuar.
+            if ($_SESSION["funcionalidad"] == 'recepciones') {
+                if ($_POST['input_unidades_esperadas'] && !empty($_POST['input_unidades_esperadas']) && $_POST['select_pedido_materiales'] && !empty($_POST['select_pedido_materiales'])){
+                    //en input_unidades_esperadas tenemos lo introducido en el input como recibido, en select_pedido_materiales tenemos idpedidomateriales_cantidadesperadaenpedido_unidadesyarecibidas.
+                    //unidades ya recibidas es la suma de quantity_received en el pedido de materiales para el producto, si se ha recibido algo ya, más las que ya estén en la tabla recepciones para ese pedido y producto, con procesado = 0, es decir, que aún no se han sumado al pedido de materiales. Todos estos datos los metemos en la tabla recepciones. Si la suma de input_unidades_esperadas y unidadesyarecibidas es superior a cantidadesperadaenpedido, pondremos un warning en la tabla.
+                    $info_select = explode("_", $_POST['select_pedido_materiales']);
+                    $id_supply_order = $info_select[0];
+                    $quantity_expected = $info_select[1];
+                    $unidades_ya_recibidas = $info_select[2];
+
+                    $unidades_recibidas = (int)$_POST['input_unidades_esperadas'];
+
+                    if (!is_int($unidades_recibidas) || ($unidades_recibidas < 1)) {
+                        muestraErrorUbicaciones('Las unidades recibidas tienen que ser un número entero positivo. Ubicación procesada correctamente');
+                        // muestraErrorUbicaciones('Las unidades recibidas tienen que ser un número entero positivo ('.$unidades_recibidas.' - '.gettype($unidades_recibidas).'). Ubicación procesada correctamente');    
+                        return;
+                    }
+
+                    $warning = (($unidades_recibidas + $unidades_ya_recibidas) > $quantity_expected) ? 1 : 0;                    
+
+                    if (almacenaRecepciones($id_localizaciones_log, $id_product, $id_product_attribute, $id_supply_order, $quantity_expected, $unidades_recibidas, $unidades_ya_recibidas, $warning)) {
+                        if ($warning) {
+                            $mensaje_warning_recepcion = 1;
+                        } else {
+                            $mensaje_ok_recepcion = 1;
+                        }
+                        
+                    } else {
+                        muestraErrorUbicaciones('Se produjo un error al almacenar la recepción de materiales pero la ubicación se procesó correctamente');    
+                        return;
+                    }
+
+                } else {
+                    muestraErrorUbicaciones('Se produjo un error al procesar la recepción de materiales pero la ubicación se procesó correctamente');    
+                    return;
+                }
+            }
+
             require_once("../views/templates/buscaproducto.php");
         } else {
             muestraErrorUbicaciones('Se produjo un error al actualizar las localizaciones');    
@@ -134,7 +207,7 @@ if(isset($_GET['id_empleado'])){
 
 } elseif (isset($_POST['submit_volver'])) {
     //localizaciones_log  
-    $id_producto = $_POST['id_producto'];   
+    // $id_producto = $_POST['id_producto'];   
     // si $id_producto = 0 es que venimos de la pantalla de error, por ejemplo por dar a buscar con el input vacío. No hacemos log ya que para errores lo hacemos en muestraErrorUbicaciones()
     //de moemtno no hacemos log
     // if ($id_producto) {
@@ -348,9 +421,163 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
   
     Db::getInstance()->Execute($sql_insert_localizaciones_log);
   
+    //si estamos haceindo recepción queremos guardar el id del nuevo insert en localizaciones_log en la tabla recepciones
+    if ($_SESSION["funcionalidad"] == 'recepciones') {
+        return Db::getInstance()->Insert_ID(); 
+    }
+
     return;
   
   }
+
+//10/07/2023 Añadimos funciones para recepciones, dado que utilizamos la estructura del ubicador
+//POR AHORA ESTA NO SE USA, SOLO BUSCAMOS PRODUCTO (debajo) - función que recibe un string introducido en el formulario de búsqueda y obtiene el o los pedidos de materiales que se adecuen a dicho string. Puede ser un ean de producto, o referencia de prestashop, o de proveedor, locual hará la búsqueda de pedidos que contengan dicho producto y estén en estado pendiente de recpción o parcialmente recibido, o directamente la referencia del pedido o parte de ella.
+// function obtenerPedidoMateriales($identificador) {
+//     $sql_pedidos = "SELECT sor.id_supply_order AS id_supply_order, sor.id_supplier AS id_supplier, sup.name AS supplier, sor.id_supply_order_state AS id_supply_order_state,
+//     sol.name AS state, sor.reference AS supply_order, sor.date_add AS date_add, sor.date_upd AS date_upd
+//     FROM lafrips_supply_order sor
+//     JOIN lafrips_supply_order_detail sod ON sod.id_supply_order = sor.id_supply_order
+//     JOIN lafrips_supply_order_state_lang sol ON sol.id_supply_order_state = sor.id_supply_order_state AND sol.id_lang = 1
+//     JOIN lafrips_supplier sup ON sup.id_supplier = sor.id_supplier
+//     WHERE sor.id_supply_order_state IN (3, 4) #buscamos solo pedidos pendientes de recpción o parcialmente recibidos
+//     AND sor.id_warehouse = 1 #solo almacén online
+//     AND (
+//         sod.reference LIKE CONCAT('%', $identificador, '%') OR
+//         sod.supplier_reference LIKE CONCAT('%', $identificador, '%') OR
+//         sod.ean13 LIKE CONCAT('%', $identificador, '%') OR
+//         sor.reference LIKE CONCAT('%', $identificador, '%')
+//     )
+//     GROUP BY sod.id_supply_order
+//     ORDER BY sor.id_supply_order ASC";
+
+//     $pedidos = Db::getInstance()->ExecuteS($sql_pedidos);
+
+//     if (empty($pedidos) || is_null($pedidos)) {
+//         return array(1, 'No pude encontrar ningún pedido de materiales sin completar con ese identificador');
+//     }
+
+//     return array(0, $pedidos);
+// }
+
+//función que busca un producto por su ean entre los pedidos de materiales sin recibir
+function obtenerPedidoMateriales($ean) {
+    //unidades_esperadas_reales es la cantidad que queda por recibir respecto a quantity_expected del pedido de materiales. Se tienen en cuenta las que ya estén recibidas en el pedido de materiales, quantity_received y las que estén en lafrips_recepciones como cantidad_recibida. Si la resta de expected menos total recibido es negativa, se pone 0, esto marcará error al mostrar en el front.
+    $sql_pedidos = "SELECT sod.id_product AS id_product, sod.id_product_attribute AS id_product_attribute, sor.id_supply_order AS id_supply_order, sor.id_supplier AS id_supplier, 
+    sod.quantity_expected AS quantity_expected, sod.quantity_received AS quantity_received, sod.id_supply_order_detail AS id_supply_order_detail,
+    sup.name AS supplier, sor.id_supply_order_state AS id_supply_order_state,
+    sol.name AS state, sor.reference AS supply_order, DATE_FORMAT(sor.date_add, '%d-%m-%Y %H:%i:%s') AS date_add, sor.date_upd AS date_upd,
+    (IFNULL((SELECT SUM(cantidad_recibida)
+        FROM lafrips_recepciones 
+        WHERE error = 0 
+        AND procesado = 0
+        AND id_product = sod.id_product
+        AND id_product_attribute = sod.id_product_attribute
+        AND id_supply_order = sod.id_supply_order), 0) + sod.quantity_received)
+        AS unidades_ya_recibidas,
+    IF((sod.quantity_expected - (IFNULL((SELECT SUM(cantidad_recibida)
+        FROM lafrips_recepciones 
+        WHERE error = 0 
+        AND procesado = 0
+        AND id_product = sod.id_product
+        AND id_product_attribute = sod.id_product_attribute
+        AND id_supply_order = sod.id_supply_order), 0) + sod.quantity_received)) < 1, 0, (sod.quantity_expected - (IFNULL((SELECT SUM(cantidad_recibida)
+        FROM lafrips_recepciones 
+        WHERE error = 0 
+        AND procesado = 0
+        AND id_product = sod.id_product
+        AND id_product_attribute = sod.id_product_attribute
+        AND id_supply_order = sod.id_supply_order), 0) + sod.quantity_received)) ) AS unidades_esperadas_reales 
+    FROM lafrips_supply_order sor
+    JOIN lafrips_supply_order_detail sod ON sod.id_supply_order = sor.id_supply_order
+    JOIN lafrips_supply_order_state_lang sol ON sol.id_supply_order_state = sor.id_supply_order_state AND sol.id_lang = 1
+    JOIN lafrips_supplier sup ON sup.id_supplier = sor.id_supplier
+    WHERE sor.id_supply_order_state IN (3, 4) #buscamos solo pedidos pendientes de recepción o parcialmente recibidos
+    AND sod.ean13 LIKE CONCAT('%', $ean, '%')
+    GROUP BY sod.id_supply_order
+    ORDER BY sor.id_supply_order ASC";
+
+    $pedidos = Db::getInstance()->ExecuteS($sql_pedidos);
+
+    if (empty($pedidos) || is_null($pedidos)) {
+        return array(1, 'No pude encontrar un producto con ese Ean en ningún pedido de materiales en espera');
+    }
+
+    return array(0, $pedidos);
+}
+
+//función para almacenar los datos de recepción en la tabla recepciones
+function almacenaRecepciones($id_localizaciones_log, $id_product, $id_product_attribute, $id_supply_order, $quantity_expected, $cantidad_recibida, $cantidad_avisada_recibida, $warning) {
+    //obtenemos el ean del producto, el proveedor y el nombre del pedido de proveedores para id_supply_order
+    $sql_info = "SELECT sor.id_supplier AS id_supplier, sup.name AS supplier, sor.reference AS supply_order_reference, sor.date_add AS supply_order_date_add,  
+    sod.id_supply_order_detail AS id_supply_order_detail, sod.ean13 AS ean
+    FROM lafrips_supply_order sor
+    JOIN lafrips_supply_order_detail sod ON sod.id_supply_order = sor.id_supply_order    
+    JOIN lafrips_supplier sup ON sup.id_supplier = sor.id_supplier
+    WHERE sor.id_supply_order = $id_supply_order
+    AND sod.id_product = $id_product
+    AND sod.id_product_attribute = $id_product_attribute";
+
+    if (!$info = Db::getInstance()->getRow($sql_info)) {
+        return false;
+    }
+
+    $id_supplier = $info['id_supplier'];
+    $supplier = $info['supplier'];
+    $supply_order_reference = $info['supply_order_reference'];
+    $supply_order_date_add = $info['supply_order_date_add'];
+    $id_supply_order_detail = $info['id_supply_order_detail'];
+    $ean = $info['ean'];
+
+    //insertamos todos los  datos
+    //$id_empleado y $nombre_empleado los sacamos de $_SESSION
+    $id_empleado = $_SESSION['id_empleado'];
+    $nombre_empleado = $_SESSION['nombre_empleado'];       
+  
+    $sql_insert_recepciones = "INSERT INTO lafrips_recepciones
+    (id_localizaciones_log,
+    id_product,
+    id_product_attribute,
+    ean,
+    id_supply_order,
+    id_supply_order_detail,
+    supply_order_reference,
+    supply_order_date_add,
+    id_supplier,
+    supplier,
+    quantity_expected,
+    cantidad_recibida,
+    cantidad_avisada_recibida,
+    id_employee,
+    nombre_employee,
+    warning,    
+    date_add)
+    VALUES
+    ($id_localizaciones_log,
+    $id_product,
+    $id_product_attribute,
+    '$ean',
+    $id_supply_order,
+    $id_supply_order_detail,
+    '$supply_order_reference',
+    '$supply_order_date_add',
+    $id_supplier,
+    '$supplier',
+    $quantity_expected, 
+    $cantidad_recibida, 
+    $cantidad_avisada_recibida,    
+    $id_empleado,
+    '$nombre_empleado', 
+    $warning,    
+    NOW())";
+  
+    if (Db::getInstance()->Execute($sql_insert_recepciones)) {
+        return true;
+    }
+
+    return false;
+}
+
+
 
 
 ?>
