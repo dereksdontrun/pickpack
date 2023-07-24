@@ -84,11 +84,11 @@ if (isset($_POST['submit_ean'])) {
         //asignamos a la variable para la plantilla y la requerimos
         $producto = $busqueda[1]; 
 
-        //guardamos log de lo mostrado una vez que se ha encontrado el producto
-        ubicacionLog($producto['id'], $producto['id_product'], $producto['id_product_attribute'], $producto['ean'], $producto['localizacion'], $producto['reposicion'], 0, 0, 0, 1);
-
         //si estamos en Recepciones, buscamos el pedido de materiales donde se encunetre el pedido, llamando a la función de rececpciones.php
+        $log_recepciones = 0;
         if ($_SESSION["funcionalidad"] == 'recepciones') {
+            $log_recepciones = 1;
+
             $busqueda_recepcion = obtenerPedidoMateriales($ean);
 
             //obtenerPedidoMateriales devuelve un array. El primer campo es "error". Si vale 1, en el segundo campo contendrá el mensaje de error, si vale 0 contendrá la info del/los pedidos de materiales. Si devuelve error, probablemente que no encuentra el ean en ningún pedido de materiales, llamamos a error.php, interrumpiendo tanto la ubicación como la recepción
@@ -101,6 +101,9 @@ if (isset($_POST['submit_ean'])) {
                 $producto['pedidos_materiales'] = $busqueda_recepcion[1]; 
             }
         }
+
+        //guardamos log de lo mostrado una vez que se ha encontrado el producto. Lo ponemos aquí de modo que si estamos en recepciones y no se encuentra el producto en pedido de materiales no guardaríamos los datos al no llegar a mostrarlo.
+        ubicacionLog($producto['id'], $producto['id_product'], $producto['id_product_attribute'], $producto['ean'], $producto['localizacion'], $producto['reposicion'], 0, 0, 0, 1, 0, 0, 0, '', $log_recepciones);
 
         require_once("../views/templates/muestraproducto.php");   
     }    
@@ -144,7 +147,12 @@ if (isset($_POST['submit_ean'])) {
     } else {        
         //comprobados los parámetros referidos a localización, son correctos, miramos si sesión nos indica que estamos haciendo rececpción y si es así sacamos también los datos para ello
         //hacemos log de lo contenido en los input una vez comprobado que los formatos son correctos. El retorno lo metemos en id_localizaciones_log. Si estamos en recepciones lo guardaremos en tabla recepciones
-        $id_localizaciones_log = ubicacionLog($_POST['id_producto'], $id_product, $id_product_attribute, '', $localizacion, $reposicion, 0, 0, 0, 0, 1);
+        $log_recepciones = 0;
+        if ($_SESSION["funcionalidad"] == 'recepciones') {
+            $log_recepciones = 1;
+        }
+
+        $id_localizaciones_log = ubicacionLog($_POST['id_producto'], $id_product, $id_product_attribute, '', $localizacion, $reposicion, 0, 0, 0, 0, 1, 0, 0, '', $log_recepciones);
 
         //$localizacion contiene algo y encaja en regex, lo metemos en location, o está vacio y por tanto lo vaciamos 
         if (actualizaLocalizaciones($id_product, $id_product_attribute, $localizacion, $reposicion)) {
@@ -155,7 +163,7 @@ if (isset($_POST['submit_ean'])) {
             if ($_SESSION["funcionalidad"] == 'recepciones') {
                 if ($_POST['input_unidades_esperadas'] && !empty($_POST['input_unidades_esperadas']) && $_POST['select_pedido_materiales'] && !empty($_POST['select_pedido_materiales'])){
                     //en input_unidades_esperadas tenemos lo introducido en el input como recibido, en select_pedido_materiales tenemos idpedidomateriales_cantidadesperadaenpedido_unidadesyarecibidas.
-                    //unidades ya recibidas es la suma de quantity_received en el pedido de materiales para el producto, si se ha recibido algo ya, más las que ya estén en la tabla recepciones para ese pedido y producto, con procesado = 0, es decir, que aún no se han sumado al pedido de materiales. Todos estos datos los metemos en la tabla recepciones. Si la suma de input_unidades_esperadas y unidadesyarecibidas es superior a cantidadesperadaenpedido, pondremos un warning en la tabla.
+                    //unidades ya recibidas es la suma de quantity_received en el pedido de materiales para el producto, si se ha recibido algo ya, más las que ya estén en la tabla recepciones para ese pedido y producto, con finalizado = 0, es decir, que aún no se han sumado al pedido de materiales. Todos estos datos los metemos en la tabla recepciones. Si la suma de input_unidades_esperadas y unidadesyarecibidas es superior a cantidadesperadaenpedido, pondremos un warning en la tabla.
                     $info_select = explode("_", $_POST['select_pedido_materiales']);
                     $id_supply_order = $info_select[0];
                     $quantity_expected = $info_select[1];
@@ -370,14 +378,14 @@ function muestraErrorUbicaciones($mensaje_error, $id_producto = '', $id_product 
     //localizaciones_log               
     ubicacionLog($id_producto, $id_product, $id_product_attribute, $ean, '', '', 0, 0, 0, 0, 0, 0, 0, $mensaje_error);
 
-    //enviamos variable action a error.php porque lo necesita para el formulario de botón volver, a ubicaciones.php
+    //enviamos variable action a error.php porque lo necesita para el formulario de botón volver, a ubicaciones.php, aunque estemos en recepciones, dado que es el mismo formulario
     $action = 'ubicaciones';
 
     require_once("../views/templates/error.php");
 }
 
 //función log de ubicaciones
-function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute = 0, $ean = '', $localizacion = '', $reposicion = '', $login = 0, $cerrar = 0, $buscar_ean = 0, $mostrar_ubicacion = 0, $submit_ok = 0, $incidencia = 0, $cancelar = 0, $mensaje_error = '') {
+function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute = 0, $ean = '', $localizacion = '', $reposicion = '', $login = 0, $cerrar = 0, $buscar_ean = 0, $mostrar_ubicacion = 0, $submit_ok = 0, $incidencia = 0, $cancelar = 0, $mensaje_error = '', $es_recepciones = 0) {
     //$id_empleado y $nombre_empleado los sacamos de $_SESSION
     $id_empleado = $_SESSION['id_empleado'];
     $nombre_empleado = $_SESSION['nombre_empleado'];       
@@ -399,6 +407,7 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
     incidencia,
     cancelar,
     mensaje_error,
+    recepciones,
     date_add)
     VALUES
     ('$id_producto',
@@ -417,6 +426,7 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
     $incidencia,
     $cancelar,    
     '$mensaje_error',
+    $es_recepciones,
     NOW())";
   
     Db::getInstance()->Execute($sql_insert_localizaciones_log);
@@ -462,14 +472,17 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
 //función que busca un producto por su ean entre los pedidos de materiales sin recibir
 function obtenerPedidoMateriales($ean) {
     //unidades_esperadas_reales es la cantidad que queda por recibir respecto a quantity_expected del pedido de materiales. Se tienen en cuenta las que ya estén recibidas en el pedido de materiales, quantity_received y las que estén en lafrips_recepciones como cantidad_recibida. Si la resta de expected menos total recibido es negativa, se pone 0, esto marcará error al mostrar en el front.
+    //para el caso de los pedidos de materiales nuevos de Cerdá, que incluyen al final los ids de expedición que contenga el archivo de expedición, hacemos un recorte a 19 caracteres al nombre, para que en el select solo se muestre hasta la fecha y hora, dado que son muy grandes si no. IF(sor.id_supplier = 65, SUBSTRING(sor.reference, 1, 19), sor.reference) AS supply_order
     $sql_pedidos = "SELECT sod.id_product AS id_product, sod.id_product_attribute AS id_product_attribute, sor.id_supply_order AS id_supply_order, sor.id_supplier AS id_supplier, 
     sod.quantity_expected AS quantity_expected, sod.quantity_received AS quantity_received, sod.id_supply_order_detail AS id_supply_order_detail,
     sup.name AS supplier, sor.id_supply_order_state AS id_supply_order_state,
-    sol.name AS state, sor.reference AS supply_order, DATE_FORMAT(sor.date_add, '%d-%m-%Y %H:%i:%s') AS date_add, sor.date_upd AS date_upd,
+    sol.name AS state, 
+    IF(sor.id_supplier = 65, SUBSTRING(sor.reference, 1, 19), sor.reference) AS supply_order, 
+    DATE_FORMAT(sor.date_add, '%d-%m-%Y %H:%i:%s') AS date_add, sor.date_upd AS date_upd,
     (IFNULL((SELECT SUM(cantidad_recibida)
         FROM lafrips_recepciones 
         WHERE error = 0 
-        AND procesado = 0
+        AND finalizado = 0
         AND id_product = sod.id_product
         AND id_product_attribute = sod.id_product_attribute
         AND id_supply_order = sod.id_supply_order), 0) + sod.quantity_received)
@@ -477,13 +490,13 @@ function obtenerPedidoMateriales($ean) {
     IF((sod.quantity_expected - (IFNULL((SELECT SUM(cantidad_recibida)
         FROM lafrips_recepciones 
         WHERE error = 0 
-        AND procesado = 0
+        AND finalizado = 0
         AND id_product = sod.id_product
         AND id_product_attribute = sod.id_product_attribute
         AND id_supply_order = sod.id_supply_order), 0) + sod.quantity_received)) < 1, 0, (sod.quantity_expected - (IFNULL((SELECT SUM(cantidad_recibida)
         FROM lafrips_recepciones 
         WHERE error = 0 
-        AND procesado = 0
+        AND finalizado = 0
         AND id_product = sod.id_product
         AND id_product_attribute = sod.id_product_attribute
         AND id_supply_order = sod.id_supply_order), 0) + sod.quantity_received)) ) AS unidades_esperadas_reales 
