@@ -51,16 +51,11 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
                 <label class="input-group-text" for="select_pedido_materiales">Pedido</label>
               </div>
               <select class="custom-select" id="select_pedido_materiales" name="select_pedido_materiales">
-                <!-- 22/08/2023 Si el producto está en más de un pedido obligamos a seleccionarlo poniéndo selected en mensaje SeleccionaPedido, si no, será un select con una sola opción -->
-                <?php if (count($producto['pedidos_materiales']) > 1) { ?>
-                  <!-- Hay varios pedidos, ponemos la primera option como Seleccion PEdido y selected, value 0 -->
-                  <option value="0" selected>SELECCIONA PEDIDO DE MATERIALES</option>
-                <?php } ?> 
                 <?php for ($x = 0; $x < count($producto['pedidos_materiales']); $x++) { ?>
-                  <!-- como value ponemos, id pedido materiales con cantidad esperada de producto y cantidad ya recibida, y cantidad real esperada, que sería la diferencia entre esas dos, o 0 si es negativo, para meter la cantidad esperada al input de debajo con javascript si se cambia el select. -->
-                  <!-- Ya no hace falta marcar selected a ningún pedido, ya que si solo hay uno no habrá  más options, si hay más estará selected el mensaje de Selecciona..., quitamos esto: < ?php if ($x == 0) { ?> selected< ?php } ?> -->
+                  <!-- como value ponemos, id pedido materiales con cantidad esperada de producto y cantidad ya recibida, y cantidad real esperada, que sería la diferencia entre esas dos, o 0 si es negativo, para meter la cantidad esperada al input de debajo con javascript si se cambia el select -->
                   <option 
-                    value="<?= $producto['pedidos_materiales'][$x]['id_supply_order'].'_'.$producto['pedidos_materiales'][$x]['quantity_expected'].'_'.$producto['pedidos_materiales'][$x]['unidades_ya_recibidas'].'_'.$producto['pedidos_materiales'][$x]['unidades_esperadas_reales'] ?>" >
+                    value="<?= $producto['pedidos_materiales'][$x]['id_supply_order'].'_'.$producto['pedidos_materiales'][$x]['quantity_expected'].'_'.$producto['pedidos_materiales'][$x]['unidades_ya_recibidas'].'_'.$producto['pedidos_materiales'][$x]['unidades_esperadas_reales'] ?>" 
+                    <?php if ($x == 0) { ?> selected<?php } ?>>
                     <?= $producto['pedidos_materiales'][$x]['supply_order'] ?> - 
                     <?= $producto['pedidos_materiales'][$x]['supplier'] ?> -
                     <?= $producto['pedidos_materiales'][$x]['state'] ?> -

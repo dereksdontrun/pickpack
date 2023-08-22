@@ -177,44 +177,35 @@ $(document).ready(function() {
             if (!isFormSubmitted) {
                 //pasamos la variable a true
                 isFormSubmitted = true;   
-
-                //22/08/2023 Primero comprobamos el value del select, si es 0 es que el producto está en más de un pedido y no lo han seleccionado, mostramos error y no pueden continuar
-                if ($("#select_pedido_materiales").val() == 0) {
-                    alert('Atención: este producto se encuentra en más de un pedido de materiales, selecciona uno para continuar');
+                
+                //sacamos las unidades a recibir, las unidades esperadas en pedido de materiales y las supuestamente ya recibidas (guardadas en el value de la opción del select separadas por "_")
+                //para asegurarnos de operar con números hacemos parseInt, en base 10, decimal
+                var unidades_a_recibir = parseInt($("#input_unidades_esperadas").val(), 10);
+                var select_value = $("#select_pedido_materiales").val().split("_");
+                var unidades_esperadas = parseInt(select_value[1], 10);
+                var unidades_ya_recibidas = parseInt(select_value[2], 10);
+                // console.log ('-unidades_a_recibir:'+unidades_a_recibir+' -unidades_esperadas:'+unidades_esperadas+' -unidades_ya_recibidas:'+unidades_ya_recibidas);
+                //si unidades a recibir es menor que 1 mostramos alert y no permitimos seguir. 
+                if (unidades_a_recibir < 1) {
+                    alert('Error: La cantidad a recibir ha de ser positiva');
                     //"reseteamos" la variable para poder entrar al envío del formulario   
                     isFormSubmitted = false;
-                    event.preventDefault(); 
-                } else {
-                    //sacamos las unidades a recibir, las unidades esperadas en pedido de materiales y las supuestamente ya recibidas (guardadas en el value de la opción del select separadas por "_")
-                    //para asegurarnos de operar con números hacemos parseInt, en base 10, decimal
-                    var unidades_a_recibir = parseInt($("#input_unidades_esperadas").val(), 10);
-                    var select_value = $("#select_pedido_materiales").val().split("_");
-                    var unidades_esperadas = parseInt(select_value[1], 10);
-                    var unidades_ya_recibidas = parseInt(select_value[2], 10);
-                    // console.log ('-unidades_a_recibir:'+unidades_a_recibir+' -unidades_esperadas:'+unidades_esperadas+' -unidades_ya_recibidas:'+unidades_ya_recibidas);
-                    //si unidades a recibir es menor que 1 mostramos alert y no permitimos seguir. 
-                    if (unidades_a_recibir < 1) {
-                        alert('Error: La cantidad a recibir ha de ser positiva');
-                        //"reseteamos" la variable para poder entrar al envío del formulario   
-                        isFormSubmitted = false;
-                        event.preventDefault();                 
-                    } else if (unidades_a_recibir > 100) {
-                        //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
-                        if(!confirm("Atención, ¿Estas segur@ de querer recepcionar tantas unidades?")){
-                            //"reseteamos" la variable para poder entrar al envío del formulario                         
-                            isFormSubmitted = false;    
-                            event.preventDefault();  
-                        }
-                    } else if ((unidades_a_recibir + unidades_ya_recibidas) > unidades_esperadas) {
-                        //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
-                        if(!confirm("Atención, ¿Quieres recepcionar más unidades de las esperadas?")){
-                            //"reseteamos" la variable para poder entrar al envío del formulario                     
-                            isFormSubmitted = false;   
-                            event.preventDefault();    
-                        }
+                    event.preventDefault();                 
+                } else if (unidades_a_recibir > 100) {
+                    //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
+                    if(!confirm("Atención, ¿Estas segur@ de querer recepcionar tantas unidades?")){
+                        //"reseteamos" la variable para poder entrar al envío del formulario                         
+                        isFormSubmitted = false;    
+                        event.preventDefault();  
                     }
-                }                
-                
+                } else if ((unidades_a_recibir + unidades_ya_recibidas) > unidades_esperadas) {
+                    //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
+                    if(!confirm("Atención, ¿Quieres recepcionar más unidades de las esperadas?")){
+                        //"reseteamos" la variable para poder entrar al envío del formulario                     
+                        isFormSubmitted = false;   
+                        event.preventDefault();    
+                    }
+                }
             } else {
                 event.preventDefault();
             }

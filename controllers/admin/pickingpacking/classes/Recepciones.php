@@ -117,7 +117,10 @@ class Recepciones
 
             return true;
         } else {
-            file_put_contents($this->log_file, date('Y-m-d H:i:s').' - No encontradas líneas a gestionar - Finalizando proceso'.PHP_EOL, FILE_APPEND);
+            //para evitar escribir sobre el archivo log cada vez aunque no haya líneas lo haremos solo si contador es mayor que 0
+            if ($this->contador_lineas > 0) {
+                file_put_contents($this->log_file, date('Y-m-d H:i:s').' - No encontradas líneas a gestionar - Finalizando proceso'.PHP_EOL, FILE_APPEND);
+            }
 
             return false;
         }

@@ -164,62 +164,28 @@ $(document).ready(function() {
 
 
     //revisamos que se reciban cantidades positivas, y avisamos cuando se supone que ya se ha recibido una cantidad superior a la esperada
-    //además también avisamos si la cantidad es superior a 100, por si se escanea la gaveta sobre el input de stock
-    //para evitar dobles clicks que envíen el formulario varias veces, tenemos la variable isFormSubmitted por defecto en false. Al entrar en el $('#formulario_ubicaciones').submit, si ha sido pulsando 'submit_producto_ok', comprobamos esa variable, si es la primera vez tendrá valor false y dejamos pasar en el if, poniéndola inmediantamente en true, de modo que si se vuelve a pulsar no podrá pasar. Este if(!isFormSubmitted) { envía a eventpreventDefault si no se cumple, de modo que el form no se ejecuta a partir del primer pulsado del submit. Si se trata de un valor 0 o alto etc y se da la opción a cancelar, ponemos la variable de nuevo en isFormSubmitted = false. 
-    let isFormSubmitted = false;
-
-    $('#formulario_ubicaciones').submit(function(event) {       
-
+    $('#formulario_ubicaciones').submit(function(event) {
         var submittedButton = $(document.activeElement);
-        //seguimos si se ha hecho submit de ok comprobando el atributo name del botón de submit, volver o incidencia no cuentan
+        //seguimos si se ha hecho submit de ok, volver o incidencia no cuentan
         if (submittedButton.attr('name') == 'submit_producto_ok') {
-            //comprobamos el valor de isFormSubmitted, si no es false es que acabamos de pasar por aquí y enviamos a event.preventDefault
-            if (!isFormSubmitted) {
-                //pasamos la variable a true
-                isFormSubmitted = true;   
-
-                //22/08/2023 Primero comprobamos el value del select, si es 0 es que el producto está en más de un pedido y no lo han seleccionado, mostramos error y no pueden continuar
-                if ($("#select_pedido_materiales").val() == 0) {
-                    alert('Atención: este producto se encuentra en más de un pedido de materiales, selecciona uno para continuar');
-                    //"reseteamos" la variable para poder entrar al envío del formulario   
-                    isFormSubmitted = false;
-                    event.preventDefault(); 
-                } else {
-                    //sacamos las unidades a recibir, las unidades esperadas en pedido de materiales y las supuestamente ya recibidas (guardadas en el value de la opción del select separadas por "_")
-                    //para asegurarnos de operar con números hacemos parseInt, en base 10, decimal
-                    var unidades_a_recibir = parseInt($("#input_unidades_esperadas").val(), 10);
-                    var select_value = $("#select_pedido_materiales").val().split("_");
-                    var unidades_esperadas = parseInt(select_value[1], 10);
-                    var unidades_ya_recibidas = parseInt(select_value[2], 10);
-                    // console.log ('-unidades_a_recibir:'+unidades_a_recibir+' -unidades_esperadas:'+unidades_esperadas+' -unidades_ya_recibidas:'+unidades_ya_recibidas);
-                    //si unidades a recibir es menor que 1 mostramos alert y no permitimos seguir. 
-                    if (unidades_a_recibir < 1) {
-                        alert('Error: La cantidad a recibir ha de ser positiva');
-                        //"reseteamos" la variable para poder entrar al envío del formulario   
-                        isFormSubmitted = false;
-                        event.preventDefault();                 
-                    } else if (unidades_a_recibir > 100) {
-                        //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
-                        if(!confirm("Atención, ¿Estas segur@ de querer recepcionar tantas unidades?")){
-                            //"reseteamos" la variable para poder entrar al envío del formulario                         
-                            isFormSubmitted = false;    
-                            event.preventDefault();  
-                        }
-                    } else if ((unidades_a_recibir + unidades_ya_recibidas) > unidades_esperadas) {
-                        //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
-                        if(!confirm("Atención, ¿Quieres recepcionar más unidades de las esperadas?")){
-                            //"reseteamos" la variable para poder entrar al envío del formulario                     
-                            isFormSubmitted = false;   
-                            event.preventDefault();    
-                        }
-                    }
-                }                
-                
-            } else {
-                event.preventDefault();
+            //sacamos las unidades a recibir, las unidades esperadas en pedido de materiales y las supuestamente ya recibidas (guardadas en el value de la opción del select separadas por "_")
+            //para asegurarnos de operar con números hacemos parseInt, en base 10, decimal
+            var unidades_a_recibir = parseInt($("#input_unidades_esperadas").val(), 10);
+            var select_value = $("#select_pedido_materiales").val().split("_");
+            var unidades_esperadas = parseInt(select_value[1], 10);
+            var unidades_ya_recibidas = parseInt(select_value[2], 10);
+            console.log ('-unidades_a_recibir:'+unidades_a_recibir+' -unidades_esperadas:'+unidades_esperadas+' -unidades_ya_recibidas:'+unidades_ya_recibidas);
+            //si unidades a recibir es menor que 1 mostramos alert y no permitimos seguir. 
+            if (unidades_a_recibir < 1) {
+                alert('Error: La cantidad a recibir ha de ser positiva');
+                event.preventDefault(); 
+            } else if ((unidades_a_recibir + unidades_ya_recibidas) > unidades_esperadas) {
+                //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
+                if(!confirm("Atención, ¿Quieres recepcionar más unidades de las esperadas?")){
+                    event.preventDefault();
+                }
             }
-        }          
-                    
+        }              
     });
 });
 

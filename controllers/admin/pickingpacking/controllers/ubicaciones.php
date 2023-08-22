@@ -108,7 +108,7 @@ if (isset($_POST['submit_ean'])) {
         require_once("../views/templates/muestraproducto.php");   
     }    
 
-} elseif (isset($_POST['submit_producto_ok'])) { 
+} elseif (isset($_POST['submit_producto_ok'])) {
     // var_dump($_POST);
     //o bien se ha pulsado el botón OK o se ha pulsado Return mediante el escaner de forma automática. Por defecto se "pulsa" el primer botón, en este caso OK. Leemos los valores de los inputs de localización y repo y los actualizamos en el producto.
     if ($_POST['id_producto']){
