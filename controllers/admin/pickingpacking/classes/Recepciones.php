@@ -143,7 +143,8 @@ class Recepciones
         $supply_order = new SupplyOrder((int)$id_supply_order);
 
         //nos aseguramos de que el pedido a procesar está o bien en Pendiente de Recepción 3 o Recibido parcialmente 4
-        if (!in_array((int)$supply_order->id_supply_order_state, array(3, 4))) {
+        //19/09/2023 Ya no recepcionamos pedidos en estado 3 pendiente de recpción, deben estar en 7 - pedido entregado, o ya en recibido parcialmente, luego 4 y 7
+        if (!in_array((int)$supply_order->id_supply_order_state, array(7, 4))) {
             $this->error = 1;
             $this->mensajes[] = 'Error - El pedido de materiales '.$this->linea['supply_order_reference'].' ('.$id_supply_order.') en id_recepciones '.$this->linea['id_recepciones'].' no se encuentra en estado correcto de recepción de materiales ('.(int)$supply_order->id_supply_order_state.')';
                 
@@ -184,7 +185,8 @@ class Recepciones
                 $supply_order_detail->quantity_received += (int)$quantity;
 
                 // if current state is "Pending receipt", then we sets it to "Order received in part"
-                if (3 == $supply_order->id_supply_order_state) {
+                //19/09/2023 En este punto y al añadir el nuevo estado de pedido de materiales 7, entregado (en almacén) el pedido que se ha comenzado a recepcionar estaría en estado 7 y no 3. Esto habrá que tenerlo en cuenta para el proceso nativo, ya que si usan el esatdo 7, no pasará a 4 sin hacer un override de AdminSupplyOrderController.php, que es de donde sale todo este código. 
+                if (7 == $supply_order->id_supply_order_state) {
                     $supply_order->id_supply_order_state = 4;
                 }
                 
@@ -257,7 +259,7 @@ class Recepciones
             
             return false;
         }        
-
+        
         $supply_order->id_supply_order_state = ($supply_order->id_supply_order_state == 4 && $supply_order->getAllPendingQuantity() > 0) ? 4 : 5;
         $supply_order->save();
 

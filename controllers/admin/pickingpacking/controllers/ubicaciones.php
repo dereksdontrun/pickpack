@@ -86,14 +86,14 @@ if (isset($_POST['submit_ean'])) {
         //asignamos a la variable para la plantilla y la requerimos
         $producto = $busqueda[1]; 
 
-        //si estamos en Recepciones, buscamos el pedido de materiales donde se encuentra el producto, llamando a la función de recepciones.php
+        //si estamos en Recepciones, buscamos el pedido de materiales donde se encuentra el producto, llamando a la función obtenerPedidoMateriales()
         $log_recepciones = 0;
         if ($_SESSION["funcionalidad"] == 'recepciones') {
             $log_recepciones = 1;
 
             $busqueda_recepcion = obtenerPedidoMateriales($ean);
 
-            //obtenerPedidoMateriales devuelve un array. El primer campo es "error". Si vale 1, en el segundo campo contendrá el mensaje de error, si vale 0 contendrá la info del/los pedidos de materiales. Si devuelve error, probablemente que no encuentra el ean en ningún pedido de materiales, llamamos a error.php, interrumpiendo tanto la ubicación como la recepción
+            //obtenerPedidoMateriales devuelve un array. El primer campo es "error". Si vale 1, en el segundo campo contendrá el mensaje de error, si vale 0 contendrá la info del/los pedidos de materiales. Si devuelve error, probablemente que no encuentra el ean en ningún pedido de materiales en los estados correctos, llamamos a error.php, interrumpiendo tanto la ubicación como la recepción
             if ($busqueda_recepcion[0]) {
                 //enviamos la variable que contiene la descripción del error
                 muestraErrorUbicaciones($busqueda_recepcion[1]);    
@@ -476,6 +476,7 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
 // }
 
 //función que busca un producto por su ean entre los pedidos de materiales sin recibir
+//19/09/2023 Hemos creado un nuevo estado de pedido de materiales, 7, pedido entregado. Ahora, cuando llegue en pedido al almacén, que estará en 3 pendiente de recpeción, en el momento que lo vayan a recepcionar lo tendrán que pasar a 7 - pedido entregado. Esta función buscará el ean solo en pedido en pedido entregado o recibido parcialmente, de modo que no se dará el error de que nos salga un producto de otro pedido en espera de llegar. Además, con el sistema de guardar el id de pedido seleccionado para el siguiente producto a escanear se arreglan casi todos los errores.
 function obtenerPedidoMateriales($ean) {
     //unidades_esperadas_reales es la cantidad que queda por recibir respecto a quantity_expected del pedido de materiales. Se tienen en cuenta las que ya estén recibidas en el pedido de materiales, quantity_received y las que estén en lafrips_recepciones como cantidad_recibida. Si la resta de expected menos total recibido es negativa, se pone 0, esto marcará error al mostrar en el front.
     //para el caso de los pedidos de materiales nuevos de Cerdá, que incluyen al final los ids de expedición que contenga el archivo de expedición, hacemos un recorte a 19 caracteres al nombre, para que en el select solo se muestre hasta la fecha y hora, dado que son muy grandes si no. IF(sor.id_supplier = 65, SUBSTRING(sor.reference, 1, 19), sor.reference) AS supply_order
@@ -510,7 +511,7 @@ function obtenerPedidoMateriales($ean) {
     JOIN lafrips_supply_order_detail sod ON sod.id_supply_order = sor.id_supply_order
     JOIN lafrips_supply_order_state_lang sol ON sol.id_supply_order_state = sor.id_supply_order_state AND sol.id_lang = 1
     JOIN lafrips_supplier sup ON sup.id_supplier = sor.id_supplier
-    WHERE sor.id_supply_order_state IN (3, 4) #buscamos solo pedidos pendientes de recepción o parcialmente recibidos
+    WHERE sor.id_supply_order_state IN (4, 7) #buscamos solo pedidos entregados o parcialmente recibidos
     AND sod.ean13 LIKE CONCAT('%', $ean, '%')
     GROUP BY sod.id_supply_order
     ORDER BY sor.id_supply_order ASC";
@@ -518,7 +519,7 @@ function obtenerPedidoMateriales($ean) {
     $pedidos = Db::getInstance()->ExecuteS($sql_pedidos);
 
     if (empty($pedidos) || is_null($pedidos)) {
-        return array(1, 'No pude encontrar un producto con ese Ean en ningún pedido de materiales en espera');
+        return array(1, 'No pude encontrar un producto con ese Ean en ningún pedido de materiales en estado Entregado o Recibido parcialmente');
     }
 
     return array(0, $pedidos);
