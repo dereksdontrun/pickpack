@@ -18,9 +18,7 @@ if (isset($_GET['id_empleado']) && isset($_GET['funcionalidad'])){
             session_start();
             $_SESSION["id_empleado"] = $id_empleado;
             $_SESSION["nombre_empleado"] = $nombre_empleado;  
-            $_SESSION["funcionalidad"] = $funcionalidad;       
-            //12/09/2023 creamos una variable de sesión id_pedido_materiales vacia. Cuando estemos en recepciones, el select de pedido de materiales se muestra por defecto con "Selecciona Pedido", cuando se seleccione uno y se pulse ok, su id_supply_order entrará en la variable de sesión, y cada vez que se busque un producto se seleccionará el pedido de materialles en el select cuyo id_supply_order coincida con el de sesión. Si se cambia de pedido se actualizará. De este modo solo habría que modificar el select la primera vez que escaneas un producto del pedido suponiendo que se escanea por pedidos y no los mezclan. Cada vez que se muestre un producto se mira la variable de sesión, si está vacía el select se pone por defecto en Selecciona, si no lo está se pone en el pedido cuyo id coincida, y no coincide ninguno, se pone en Selecciona
-            $_SESSION["id_pedido_materiales"] = 0;                    
+            $_SESSION["funcionalidad"] = $funcionalidad;                    
 
             //con los datos del empleado en sesión, mostramos el formulario de búsqueda de producto, un input para ean con el cursor sobre el.            
 
@@ -55,7 +53,7 @@ if (isset($_GET['id_empleado']) && isset($_GET['funcionalidad'])){
             header("Location: $url");
 }
 
-//en este punto estamos trabajando con ubicaciones o recepciones+ubicaciones y tenemos una sesión abierta
+//en este punto estamos trabajanod con ubicaciones o recpeciones+ubicaciones y tenemos una sesión abierta
 if (isset($_POST['submit_ean'])) {
     //llegamos del formulario de buscar producto por ean
     if ($_POST['ean'] && $_POST['ean'] != '') {
@@ -86,7 +84,7 @@ if (isset($_POST['submit_ean'])) {
         //asignamos a la variable para la plantilla y la requerimos
         $producto = $busqueda[1]; 
 
-        //si estamos en Recepciones, buscamos el pedido de materiales donde se encuentra el producto, llamando a la función de recepciones.php
+        //si estamos en Recepciones, buscamos el pedido de materiales donde se encunetre el pedido, llamando a la función de rececpciones.php
         $log_recepciones = 0;
         if ($_SESSION["funcionalidad"] == 'recepciones') {
             $log_recepciones = 1;
@@ -168,10 +166,6 @@ if (isset($_POST['submit_ean'])) {
                     //unidades ya recibidas es la suma de quantity_received en el pedido de materiales para el producto, si se ha recibido algo ya, más las que ya estén en la tabla recepciones para ese pedido y producto, con finalizado = 0, es decir, que aún no se han sumado al pedido de materiales. Todos estos datos los metemos en la tabla recepciones. Si la suma de input_unidades_esperadas y unidadesyarecibidas es superior a cantidadesperadaenpedido, pondremos un warning en la tabla.
                     $info_select = explode("_", $_POST['select_pedido_materiales']);
                     $id_supply_order = $info_select[0];
-
-                    //12/09/2023 Metemos el id_supply_order del select en la variable de sesión que se usa para que si ya han escogido un pedido la siguiente vez les salga seleccionado el mismo pedido si el nuevo producto está en dicho pedido. Si la variable ya contiene un id y el pedido es el mismo se sobreescribe y la variable de sesión no cambia, así nos aseguramos.
-                    $_SESSION["id_pedido_materiales"] = $id_supply_order; 
-
                     $quantity_expected = $info_select[1];
                     $unidades_ya_recibidas = $info_select[2];
 

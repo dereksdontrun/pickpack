@@ -51,32 +51,67 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
                 <label class="input-group-text" for="select_pedido_materiales">Pedido</label>
               </div>
               <select class="custom-select" id="select_pedido_materiales" name="select_pedido_materiales">
-                <!-- 22/08/2023 Si el producto está en más de un pedido obligamos a seleccionarlo poniéndo selected en mensaje SeleccionaPedido, si no, será un select con una sola opción -->
-                <?php if (count($producto['pedidos_materiales']) > 1) { ?>
-                  <!-- Hay varios pedidos, ponemos la primera option como Seleccion PEdido y selected, value 0 -->
+                <!-- YA NO - 22/08/2023 Si el producto está en más de un pedido obligamos a seleccionarlo poniéndo selected en mensaje SeleccionaPedido, si no, será un select con una sola opción -->
+                <!-- 12/09/2023 Comprobamos la variable de sesión $_SESSION["id_pedido_materiales"], se compara con el id_sipply_order de cada pedido (o del pedido si solo hay uno) y se marca selected al que coincida, o a ninguno si no hay coincidencia, en cuyo caso, al final se le pone a "SELECCIONA..."
+                Es decir: Si el producto solo está en un pedido se marca seleccionado ese, si está en varios y $_SESSION["id_pedido_materiales"] vale 0 o no coincide con ninguno de esos pedidos, se marca seleccionado "SELECCIONA...", y si hay varios y $_SESSION["id_pedido_materiales"] coincide con alguno, se marca seleccionado ese pedido. PD, siempre ha de estar en al menos un pedido, si no no llegamos aquí -->
+                <!-- Variable $selected que pasa a 1 si se marca selected algún option, variable $posicion_array para almacenar la posicion en array de pedidos para luego mostrar en el input las unidades esperadas/recibidas del producto (hasta ahora ponía 0, que era el primer pedido por defecto) -->
+                <?php $selected = 0; $posicion_array = 0; ?>  
+                <!-- si solo hay un pedido -->
+                <?php if (count($producto['pedidos_materiales']) == 1) { ?>
+                  <!-- Ponemos el pedido único como selected, independientemente de $_SESSION["id_pedido_materiales"]. Está en la posición 0 del array pedidos_materiales, $posicion_array se queda en 0 -->
+                  <?php $selected = 1; ?>
+                  <option 
+                    value="<?= $producto['pedidos_materiales'][0]['id_supply_order'].'_'.$producto['pedidos_materiales'][0]['quantity_expected'].'_'.$producto['pedidos_materiales'][0]['unidades_ya_recibidas'].'_'.$producto['pedidos_materiales'][$x]['unidades_esperadas_reales'] ?>" selected>
+                    <?= $producto['pedidos_materiales'][0]['supply_order'] ?> - 
+                    <?= $producto['pedidos_materiales'][0]['supplier'] ?> -
+                    <?= $producto['pedidos_materiales'][0]['state'] ?> -
+                    <?= $producto['pedidos_materiales'][0]['date_add'] ?>                     
+                  </option>
+                <?php } else { ?> 
+                <!-- varios pedidos, recorremos los id_supply_order buscando el contenido de $_SESSION["id_pedido_materiales"], que podría estar vacío. Si coincide alguno se marca selected -->
+                  <?php for ($x = 0; $x < count($producto['pedidos_materiales']); $x++) { ?>                    
+                    <!-- como value ponemos, id pedido materiales con cantidad esperada de producto y cantidad ya recibida, y cantidad real esperada, que sería la diferencia entre esas dos, o 0 si es negativo, para meter la cantidad esperada al input de debajo con javascript si se cambia el select. -->
+                    <!-- Ya no hace falta marcar selected a ningún pedido, ya que si solo hay uno no habrá  más options, si hay más estará selected el mensaje de Selecciona..., quitamos esto: < ?php if ($x == 0) { ?> selected< ?php } ?> -->
+                    <option 
+                      value="<?= $producto['pedidos_materiales'][$x]['id_supply_order'].'_'.$producto['pedidos_materiales'][$x]['quantity_expected'].'_'.$producto['pedidos_materiales'][$x]['unidades_ya_recibidas'].'_'.$producto['pedidos_materiales'][$x]['unidades_esperadas_reales'] ?>" 
+                      <?php if ($_SESSION["id_pedido_materiales"] == $producto['pedidos_materiales'][$x]['id_supply_order']) { //El id de pedido de materiales coincide, marcamos selected a este option?>                        
+                        <?php $selected = 1; $posicion_array = $x; ?>
+                        selected
+                      <?php } ?>
+                      >
+                      <?= $producto['pedidos_materiales'][$x]['supply_order'] ?> - 
+                      <?= $producto['pedidos_materiales'][$x]['supplier'] ?> -
+                      <?= $producto['pedidos_materiales'][$x]['state'] ?> -
+                      <?= $producto['pedidos_materiales'][$x]['date_add'] ?>                     
+                    </option>
+                  <?php  }?> <!-- Fin for() -->
+                <?php } ?>  <!-- Fin if -->
+                <!-- Si $selected = 0, no se ha pre seleccionado ningún pedido, porque hay más de uno, y no coincide ninguno con $_SESSION["id_pedido_materiales"], añadimos option con "SELECCIONA..." -->
+                <?php if (!$selected) { ?>
+                  <!-- Hay varios pedidos, ponemos la option como Selecciona PEdido y selected, value 0 -->
                   <option value="0" selected>SELECCIONA PEDIDO DE MATERIALES</option>
                 <?php } ?> 
-                <?php for ($x = 0; $x < count($producto['pedidos_materiales']); $x++) { ?>
-                  <!-- como value ponemos, id pedido materiales con cantidad esperada de producto y cantidad ya recibida, y cantidad real esperada, que sería la diferencia entre esas dos, o 0 si es negativo, para meter la cantidad esperada al input de debajo con javascript si se cambia el select. -->
-                  <!-- Ya no hace falta marcar selected a ningún pedido, ya que si solo hay uno no habrá  más options, si hay más estará selected el mensaje de Selecciona..., quitamos esto: < ?php if ($x == 0) { ?> selected< ?php } ?> -->
-                  <option 
-                    value="<?= $producto['pedidos_materiales'][$x]['id_supply_order'].'_'.$producto['pedidos_materiales'][$x]['quantity_expected'].'_'.$producto['pedidos_materiales'][$x]['unidades_ya_recibidas'].'_'.$producto['pedidos_materiales'][$x]['unidades_esperadas_reales'] ?>" >
-                    <?= $producto['pedidos_materiales'][$x]['supply_order'] ?> - 
-                    <?= $producto['pedidos_materiales'][$x]['supplier'] ?> -
-                    <?= $producto['pedidos_materiales'][$x]['state'] ?> -
-                    <?= $producto['pedidos_materiales'][$x]['date_add'] ?>                     
-                  </option>
-                <?php  }?>
               </select>
             </div>  
             <div class="input-group mb-3 input-group-recepciones">
               <span class="input-group-text input_ubicaciones">Esperadas</span>
               <!-- ponemos a / b, siendo b el total esperado del pedido y a si ya se supone que hemos marcado recibida alguna, ya sea aquí o de forma permanente en pedido materiales -->
+              <!-- 12/09/2023 Para saber los datos de que pedido mostrar usamos $posicion_array, que será 0 si no se ha preseleccionado ningún pedido o si solo hay uno y por tanto su valor debe ser 0. En caso de no haber nada seleccionado en el select, ponemos, Selecciona pedido! -->
               <span class="input-group-text input_ubicaciones" id="span_esperadas_recibidas">
-               <?= $producto['pedidos_materiales'][0]['unidades_ya_recibidas'].' / '. $producto['pedidos_materiales'][0]['quantity_expected'] ?>
+                <?php if (!$selected) { ?>
+                  <!-- El select se ha cargado sin pedido seleccionado -->
+                  SELECCIONA PEDIDO
+                <?php } else { ?> 
+                  <?= $producto['pedidos_materiales'][$posicion_array]['unidades_ya_recibidas'].' / '. $producto['pedidos_materiales'][$posicion_array]['quantity_expected'] ?>
+                <?php } ?> 
               </span>
               <!-- cargamos con las unidades esperadas del primer pedido que caerá por defecto como selected en el select. Se actualiza dinámicamente desde back,js al cambiar el select -->
-              <input type="number" class="form-control input_ubicaciones" id="input_unidades_esperadas"  name="input_unidades_esperadas" value="<?= $producto['pedidos_materiales'][0]['unidades_esperadas_reales'] ?>"  onfocus="this.select()"> 
+              <input type="number" class="form-control input_ubicaciones" id="input_unidades_esperadas"  name="input_unidades_esperadas" 
+                <?php if (!$selected) { ?> 
+                  value="0"
+                <?php } else { ?>
+                  value="<?= $producto['pedidos_materiales'][$posicion_array]['unidades_esperadas_reales'] ?>"
+                <?php } ?>  onfocus="this.select()"> 
             </div>            
           </div>          
         <?php } ?>
