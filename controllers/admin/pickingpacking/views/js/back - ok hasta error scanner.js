@@ -162,16 +162,6 @@ $(document).ready(function() {
         }
     });
 
-    //quiero impedir que se lance el formulario pulsando Enter
-    // NOOOO se puede, ya que el trigger que hace el scanner se interpreta como pulsar enter, y se para también. Quizás el scanner sea configurable, pero supongo que habría que configurar todos y esto será por defecto.
-    // $('#formulario_ubicaciones').on('keydown', function(event) {
-    //     //Enter (key code 13)
-    //     if (event.keyCode === 13) {
-    //         //paramos la ejecución
-    //         event.preventDefault();
-    //         console.log('Enter pulsado, paramos formulario.');
-    //     }
-    // });
 
     //revisamos que se reciban cantidades positivas, y avisamos cuando se supone que ya se ha recibido una cantidad superior a la esperada
     //además también avisamos si la cantidad es superior a 100, por si se escanea la gaveta sobre el input de stock
@@ -179,39 +169,19 @@ $(document).ready(function() {
     let isFormSubmitted = false;
 
     $('#formulario_ubicaciones').submit(function(event) {       
-        // console.log('formulario submit');        
-
-        //27/09/2023 Tenemos 3 botones submit, por defecto, si pulsamos Enter, o en nuestro caso el equivalente que es el escanner que lo dispara, el submit que "ejecuta" el formulario por defecto es el primero por orden en el html, es decir, submit_producto_ok. Aquí tenemos el problema de que si pulsamos Volver o Incidencia, también pasa por aquí y en esos casos no queremos que mire ni cantidades a recibir ni nada, solo que continue con el submit. Como hemos puesto esa medida de seguridad para caundo se pulsa dos veces muy rápido OK y después ejecutamos las comprobaciones, tengo que poner un if antes, que si el submittedButton.attr('name') es vovler o incidencia, no ejecute nada de eso y prosiga con eventdefault, es decir, nada dentro del if de esa condición, y el else es todo lo demás       
 
         var submittedButton = $(document.activeElement);
-        // console.log('submitted button name: '+submittedButton.attr('name'));
-        if ((submittedButton.attr('name') == 'submit_volver') || (submittedButton.attr('name') == 'submit_producto_incidencia')) {
-            //nada, quiero que el formulario se envíe
+        //seguimos si se ha hecho submit de ok comprobando el atributo name del botón de submit, volver o incidencia no cuentan
+        if (submittedButton.attr('name') == 'submit_producto_ok') {
+            //comprobamos el valor de isFormSubmitted, si no es false es que acabamos de pasar por aquí y enviamos a event.preventDefault
+            if (!isFormSubmitted) {
+                //pasamos la variable a true
+                isFormSubmitted = true;   
 
-        } else {
-            //seguimos si se ha hecho submit de ok comprobando el atributo name del botón de submit, volver o incidencia no cuentan
-            if (submittedButton.attr('name') == 'submit_producto_ok') {
-                // console.log('formulario submit_producto_ok');
-                //comprobamos el valor de isFormSubmitted, si no es false es que acabamos de pasar por aquí y enviamos a event.preventDefault
-                if (!isFormSubmitted) {
-                    //pasamos la variable a true
-                    isFormSubmitted = true;                           
-                    
-                } else {
-                    // console.log('formulario preventDefault');
-                    event.preventDefault();
-                }
-            } 
-            
-            //22/08/2023 Primero comprobamos el value del select, si es 0 es que el producto está en más de un pedido y no lo han seleccionado, mostramos error y no pueden continuar
-            //27/09/2023 Sacamos todo este if else de if (submittedButton.attr('name') == 'submit_producto_ok') porque si se usa el scanner nunca entra ahí al no ser 'submit_product_ok', de modo que aquí debajo, por si acaso, pasamos isFormSubmitted a false en caso de que sea necesario, aunque quizás no hayamos entrado por 'submit_product_ok'
-            //en el front en el formulario de ubicaciones/recepciones tenemos un input hidden de id "es_recepcion" que vale 1 si lo es y 0  si no. Para evitar procesar todo esto si estamos en ubicaciones, comprobamos ese value, y si es 0 no entramos aquí.
-            // console.log("es_recepcion: "+$("#es_recepcion").val());
-            if ($("#es_recepcion").val() == 1) {
-                console.log("es_recepcion");
+                //22/08/2023 Primero comprobamos el value del select, si es 0 es que el producto está en más de un pedido y no lo han seleccionado, mostramos error y no pueden continuar
                 if ($("#select_pedido_materiales").val() == 0) {
                     alert('Atención: este producto se encuentra en más de un pedido de materiales, selecciona uno para continuar');
-                    //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK  
+                    //"reseteamos" la variable para poder entrar al envío del formulario   
                     isFormSubmitted = false;
                     event.preventDefault(); 
                 } else {
@@ -225,30 +195,30 @@ $(document).ready(function() {
                     //si unidades a recibir es menor que 1 mostramos alert y no permitimos seguir. 
                     if (unidades_a_recibir < 1) {
                         alert('Error: La cantidad a recibir ha de ser positiva');
-                        //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK   
+                        //"reseteamos" la variable para poder entrar al envío del formulario   
                         isFormSubmitted = false;
                         event.preventDefault();                 
                     } else if (unidades_a_recibir > 100) {
                         //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
                         if(!confirm("Atención, ¿Estas segur@ de querer recepcionar tantas unidades?")){
-                            //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK                         
+                            //"reseteamos" la variable para poder entrar al envío del formulario                         
                             isFormSubmitted = false;    
                             event.preventDefault();  
                         }
                     } else if ((unidades_a_recibir + unidades_ya_recibidas) > unidades_esperadas) {
                         //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
                         if(!confirm("Atención, ¿Quieres recepcionar más unidades de las esperadas?")){
-                            //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK                    
+                            //"reseteamos" la variable para poder entrar al envío del formulario                     
                             isFormSubmitted = false;   
                             event.preventDefault();    
                         }
                     }
-                }   
+                }                
+                
+            } else {
+                event.preventDefault();
             }
-              
-        }        
-        
-        // console.log('formulario submit fin');
+        }          
                     
     });
 });

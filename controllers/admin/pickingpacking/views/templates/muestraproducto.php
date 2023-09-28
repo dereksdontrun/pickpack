@@ -126,6 +126,8 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
             </div>
             <!-- coloco el id d producto en un input hidden para el proceso de actualización. Va compuesto de id_product e id_product_attribute -->
             <input type="hidden" name="id_producto" value="<?= $producto['id'] ?>">
+            <!-- 27/09/2023 Ponemos un input hidden con id "es_recepcion" y value 1 o 0 para saber desde javascript si antes de procesar el formulario estamos procesando ubicacion o recepcion y por tanto no procesar select de pedidos o cantidades a recibir si estamos en ubicacion -->
+            <input type="hidden" id="es_recepcion" name="es_recepcion" value="<?php if ($recepciones) { ?>1<?php } else { ?>0<?php } ?>">
           </div>
           <div class="card-body text-center <?php if ($recepciones) { ?> card-recepciones<?php } ?>">
             <div class="btn-group btn-group-lg" role="group">
