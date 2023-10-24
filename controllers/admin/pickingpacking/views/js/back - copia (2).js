@@ -147,24 +147,6 @@ $(document).ready(function() {
     if ($("#input_unidades_esperadas").val() < 1) {
         $("#input_unidades_esperadas").css("background-color","#F8A1A4");
     }
-
-    //24/10/2023 Comprobamos si hay un pedido seleccionado, si lo hay buscamos su mensaje de pedido y si este existe, hacemos visible el botón de mostrar mensaje
-    if ($("#select_pedido_materiales").val() == 0) {
-        //nos aseguramos de que botón mensaje sea hidden
-        $("#submit_supply_order_message").hide();
-    } else {
-        //sacamos el id de pedido para comprobar el value del input hidden que guarda su mensaje.         
-        var select_value = $("#select_pedido_materiales").val().split("_");
-        var id_supply_order = select_value[0];
-        console.log('mensaje pedido ' + $("#supply_order_message_"+id_supply_order).val());
-        $("#submit_supply_order_message").attr("data-value", id_supply_order);
-        //comprobamos si en el input hidden del pedido hay mensaje o venía vacío. Si estaba vacío no mostramos botón
-        if ($("#supply_order_message_"+id_supply_order).val() != '') {
-            $("#submit_supply_order_message").show();
-        } else {
-            $("#submit_supply_order_message").hide();
-        }          
-    }
     
     //11/07/2023 Para Rececpcionador. Cuando el select de pedido de materiales cambie, obtenemos el value de la opción elegida y sacamos la cantidad y la ponemos en el input de unidades esperadas. Además ponemos en el span de unidades recibidas / esperadas los valores necesarios también.
     //recibimos 'idsupplier_unidadesesperadas_unidadesrecibidas_unidadesesperadasreales'    
@@ -178,23 +160,7 @@ $(document).ready(function() {
         } else {
             $("#input_unidades_esperadas").css("background-color","#FFFFFF");
         }
-
-        //24/10/2023 cambiamos el atributo data-value del botón de mensaje por el id de pedido. Nos aseguramos de mostrar el botón de mensaje, a menos que id_supply_order sea 0, lo que significa que el select está en "Selecciona pedido"
-        // document.getElementById("submit_supply_order_message").setAttribute("data-value", this.value.split("_")[0]);
-        // mostrar o esconde con javascript 
-        // document.getElementById("myButton").style.display = "block";  o "none"
-        $("#submit_supply_order_message").attr("data-value", this.value.split("_")[0]);
-        if (this.value.split("_")[0] == 0) {
-            $("#submit_supply_order_message").hide();
-        } else {
-            //comprobamos si en el input hidden del pedido hay mensaje o venía vacío. Si estaba vacío no mostramos botón
-            if ($("#supply_order_message_"+this.value.split("_")[0]).val() != '') {
-                $("#submit_supply_order_message").show();
-            } else {
-                $("#submit_supply_order_message").hide();
-            }            
-        }        
-    });    
+    });
 
     //quiero impedir que se lance el formulario pulsando Enter
     // NOOOO se puede, ya que el trigger que hace el scanner se interpreta como pulsar enter, y se para también. Quizás el scanner sea configurable, pero supongo que habría que configurar todos y esto será por defecto.
@@ -286,16 +252,6 @@ $(document).ready(function() {
                     
     });
 });
-
-//24/10/2023 Función que se llama al hacer click sobre el botón Mensaje de pedido de materiales
-function muestraMensajePedido() {
-    var button = document.getElementById("submit_supply_order_message");
-    var id_supply_order = button.getAttribute("data-value");
-    var message = document.getElementById("supply_order_message_"+id_supply_order).value;
-
-    alert(message);
-}
-
 
 // $(function(){
 

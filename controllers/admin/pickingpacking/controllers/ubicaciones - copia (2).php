@@ -477,11 +477,10 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
 
 //función que busca un producto por su ean entre los pedidos de materiales sin recibir
 //19/09/2023 Hemos creado un nuevo estado de pedido de materiales, 7, pedido entregado. Ahora, cuando llegue en pedido al almacén, que estará en 3 pendiente de recpeción, en el momento que lo vayan a recepcionar lo tendrán que pasar a 7 - pedido entregado. Esta función buscará el ean solo en pedido en pedido entregado o recibido parcialmente, de modo que no se dará el error de que nos salga un producto de otro pedido en espera de llegar. Además, con el sistema de guardar el id de pedido seleccionado para el siguiente producto a escanear se arreglan casi todos los errores.
-//24/10/2023 Hemos añadido un campo supply_order_message a los pedidos de materiales donde se podrá almacenar un mensaje sobre el pedido. Queremos recoger dicho mensaje para mostrarlo en el rececpionador
 function obtenerPedidoMateriales($ean) {
     //unidades_esperadas_reales es la cantidad que queda por recibir respecto a quantity_expected del pedido de materiales. Se tienen en cuenta las que ya estén recibidas en el pedido de materiales, quantity_received y las que estén en lafrips_recepciones como cantidad_recibida. Si la resta de expected menos total recibido es negativa, se pone 0, esto marcará error al mostrar en el front.
     //para el caso de los pedidos de materiales nuevos de Cerdá, que incluyen al final los ids de expedición que contenga el archivo de expedición, hacemos un recorte a 19 caracteres al nombre, para que en el select solo se muestre hasta la fecha y hora, dado que son muy grandes si no. IF(sor.id_supplier = 65, SUBSTRING(sor.reference, 1, 19), sor.reference) AS supply_order
-    $sql_pedidos = "SELECT sod.id_product AS id_product, sod.id_product_attribute AS id_product_attribute, sor.id_supply_order AS id_supply_order, sor.id_supplier AS id_supplier, sor.supply_order_message AS supply_order_message,
+    $sql_pedidos = "SELECT sod.id_product AS id_product, sod.id_product_attribute AS id_product_attribute, sor.id_supply_order AS id_supply_order, sor.id_supplier AS id_supplier, 
     sod.quantity_expected AS quantity_expected, sod.quantity_received AS quantity_received, sod.id_supply_order_detail AS id_supply_order_detail,
     sup.name AS supplier, sor.id_supply_order_state AS id_supply_order_state,
     sol.name AS state, 
