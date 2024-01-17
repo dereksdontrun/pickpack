@@ -55,11 +55,14 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
                 <!-- 12/09/2023 Comprobamos la variable de sesión $_SESSION["id_pedido_materiales"], se compara con el id_sipply_order de cada pedido (o del pedido si solo hay uno) y se marca selected al que coincida, o a ninguno si no hay coincidencia, en cuyo caso, al final se le pone a "SELECCIONA..."
                 Es decir: Si el producto solo está en un pedido se marca seleccionado ese, si está en varios y $_SESSION["id_pedido_materiales"] vale 0 o no coincide con ninguno de esos pedidos, se marca seleccionado "SELECCIONA...", y si hay varios y $_SESSION["id_pedido_materiales"] coincide con alguno, se marca seleccionado ese pedido. PD, siempre ha de estar en al menos un pedido, si no no llegamos aquí -->
                 <!-- Variable $selected que pasa a 1 si se marca selected algún option, variable $posicion_array para almacenar la posicion en array de pedidos para luego mostrar en el input las unidades esperadas/recibidas del producto (hasta ahora ponía 0, que era el primer pedido por defecto) -->
-                <?php $selected = 0; $posicion_array = 0; ?>  
+                <?php $selected = 0; $posicion_array = 0; $id_supply_order = 0;?>  
                 <!-- si solo hay un pedido -->
                 <?php if (count($producto['pedidos_materiales']) == 1) { ?>
                   <!-- Ponemos el pedido único como selected, independientemente de $_SESSION["id_pedido_materiales"]. Está en la posición 0 del array pedidos_materiales, $posicion_array se queda en 0 -->
-                  <?php $selected = 1; ?>
+                  <?php 
+                    $selected = 1; 
+                    $id_supply_order = $producto['pedidos_materiales'][0]['id_supply_order'];
+                  ?>
                   <option 
                     value="<?= $producto['pedidos_materiales'][0]['id_supply_order'].'_'.$producto['pedidos_materiales'][0]['quantity_expected'].'_'.$producto['pedidos_materiales'][0]['unidades_ya_recibidas'].'_'.$producto['pedidos_materiales'][$x]['unidades_esperadas_reales'] ?>" selected>
                     <?= $producto['pedidos_materiales'][0]['supply_order'] ?> - 
@@ -75,7 +78,11 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
                     <option 
                       value="<?= $producto['pedidos_materiales'][$x]['id_supply_order'].'_'.$producto['pedidos_materiales'][$x]['quantity_expected'].'_'.$producto['pedidos_materiales'][$x]['unidades_ya_recibidas'].'_'.$producto['pedidos_materiales'][$x]['unidades_esperadas_reales'] ?>" 
                       <?php if ($_SESSION["id_pedido_materiales"] == $producto['pedidos_materiales'][$x]['id_supply_order']) { //El id de pedido de materiales coincide, marcamos selected a este option?>                        
-                        <?php $selected = 1; $posicion_array = $x; ?>
+                        <?php 
+                          $selected = 1; 
+                          $posicion_array = $x; 
+                          $id_supply_order = $producto['pedidos_materiales'][$x]['id_supply_order'];
+                        ?>
                         selected
                       <?php } ?>
                       >
@@ -92,7 +99,12 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
                   <option value="0" selected>SELECCIONA PEDIDO DE MATERIALES</option>
                 <?php } ?> 
               </select>
-            </div>  
+            </div> 
+            <!-- 24/10/2023 Para almacenar los posibles mensajes de pedidod e materiales voy a generar un input hidden por pedido, con su id de pedido y value el mensaje, de modo que podamos cambiar el value del input hidden del mensaje del pedido seleccionado, que será el que se muestre  -->
+            <?php for ($x = 0; $x < count($producto['pedidos_materiales']); $x++) { ?>
+              <input type="hidden" id="supply_order_message_<?= $producto['pedidos_materiales'][$x]['id_supply_order'] ?>" name="supply_order_message_<?= $producto['pedidos_materiales'][$x]['id_supply_order'] ?>" value="<?= $producto['pedidos_materiales'][$x]['supply_order_message'] ?>">
+            <?php } ?>
+
             <div class="input-group mb-3 input-group-recepciones">
               <span class="input-group-text input_ubicaciones">Esperadas</span>
               <!-- ponemos a / b, siendo b el total esperado del pedido y a si ya se supone que hemos marcado recibida alguna, ya sea aquí o de forma permanente en pedido materiales -->
@@ -111,20 +123,7 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
                   value="0"
                 <?php } else { ?>
                   value="<?= $producto['pedidos_materiales'][$posicion_array]['unidades_esperadas_reales'] ?>"
-                <?php } ?>  onfocus="this.select()"> 
-              <!-- 24/10/2023 Ponemos un input hidden que contendrá el mensaje de pedido de materiales si es que el epdido tiene. -->               
-              <input type="hidden" id="selected_supply_order_message" name="selected_supply_order_message" 
-                <?php if (!$selected) { ?> 
-                  value=""
-                <?php } else { 
-                  if ($producto['pedidos_materiales'][$posicion_array]['supply_order_message'] != '') {
-                    $hay_mensaje_pedido = 1;
-                  } else {
-                    $hay_mensaje_pedido = 0;
-                  }
-                  ?>
-                  value="<?= $producto['pedidos_materiales'][$posicion_array]['supply_order_message'] ?>"
-                <?php } ?>>          
+                <?php } ?>  onfocus="this.select()">                       
             </div>            
           </div>          
         <?php } ?>
@@ -144,9 +143,9 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
           </div>
           <div class="card-body text-center <?php if ($recepciones) { ?> card-recepciones<?php } ?>">
             <div class="btn-group btn-group-lg" role="group">
-              <?php if ($selected && $hay_mensaje_pedido) { ?>                 
-                <button type="button" class="btn btn-info btn-outline-light btn_ubicacion" name="submit_supply_order_message" onclick="muestraMensajePedido()">Mensaje</button>  
-              <?php } ?> 
+                               
+              <button type="button" class="btn btn-info btn-outline-light btn_ubicacion" id="submit_supply_order_message" onclick="muestraMensajePedido()"  data-value="<?php $id_supply_order ?>">Info</button>  
+              
               <button type="submit" class="btn btn-success btn-outline-light btn_ubicacion" name="submit_producto_ok">OK</button>
               <button type="submit" class="btn btn-warning btn-outline-light btn_ubicacion" name="submit_volver">Volver</button>
               <button type="submit" class="btn btn-danger btn-outline-light btn_ubicacion" name="submit_producto_incidencia">Incidencia</button>

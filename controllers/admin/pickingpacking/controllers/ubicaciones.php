@@ -7,6 +7,8 @@ include('herramientas.php');
 //si llegamos desde pickpackindex tras pasar por el login, existirá el parámetro GET en la url con el id de empleado. Solo debe estar si venimos desde login, ya que $_SESSION["funcionalidad"] solo debe ponerse una vez
 //11/07/2023 Vamos a utilizar este controlador para ubicaciones y recepciones. Recepciones será una versión ampliada de ubicaciones. Además de ubicar, tendrá un input de cantidad recibida y un select para el pedido de materiales al que corrsponde. Llegamos aquí desde login, con un GET con el id de usuario, y otro GET funcionalidad, que indica si hacemos rececpión o solo ubicación, lo que creará la sesión con una funcionalidad u otra, que es lo que mostrará unos inputs y colores u otros.
 
+//03/01/2024 Vamos a dar la posibilidad de modificar el stock desde ubicador/recepcionador. He añadido un input en lugar de la cifra de stock plana. Se comprobará por javascript si se ha modificado e impedirá un negativo. 
+
 if (isset($_GET['id_empleado']) && isset($_GET['funcionalidad'])){
 
     $id_empleado = $_GET['id_empleado'];
@@ -125,6 +127,30 @@ if (isset($_POST['submit_ean'])) {
         muestraErrorUbicaciones('Error obteniendo datos del producto');    
         return;
     }
+
+    //04/01/2024 Comprobamos los inputs de stock físico    
+    //este input es el visible y contiene el stock que confirma el usuario, lo toque o no. Lo llamo new_stock aunque no lo toque
+    $new_stock = trim($_POST['input_stock']);    
+    
+    //este input es el hidden y contiene el stock original para comparar con new_stock y saber si ha sido modificado, y calcular la operación para el nuevo stock
+    $original_stock = $_POST['input_stock_hidden'];
+
+    //nos aseguramos de que javascript ha filtrado bien y los números son enteros - POST llega como String...
+    // if (!is_int($new_stock)) {
+    //     muestraErrorUbicaciones('El nuevo stock de producto no es un número entero, es '.gettype($new_stock), $id_producto, $id_product, $id_product_attribute);    
+    //     return;
+    // }   
+    $mensaje_stock = '';
+    if ($new_stock != $original_stock) {
+        //el usuario ha modificado el stock, llamamos a la función para hacer el cambio
+        if (!modificarStock($id_product, $id_product_attribute, (int)$new_stock, (int)$original_stock)) {
+            muestraErrorUbicaciones('Se produjo un error al modificar el stock físico del producto', $id_product.'_'.$id_product_attribute, $id_product, $id_product_attribute);    
+            return;            
+        } else {
+            $mensaje_ok_stock = 1;
+            $mensaje_stock = "<br>Stock actualizado correctamente.";
+        }
+    }
     
     if ($_POST['input_localizacion']){
         //se puede introducir algo o vaciar el input si queremos borrar la localización, así que admitimos vacío
@@ -136,7 +162,7 @@ if (isset($_POST['submit_ean'])) {
         $reposicion = trim(pSQL($_POST['input_reposicion']));
         //como no le pasamos preg_match nos aseguramos de que no pasa de 64 caracteres que es lo que admite la BD
         if (strlen($reposicion) > 64) {
-            muestraErrorUbicaciones('Error: ubicación de reposición demasiado larga (64 caracteres)');    
+            muestraErrorUbicaciones('Error: ubicación de reposición demasiado larga (64 caracteres).'.$mensaje_stock);    
             return;
         }
     }
@@ -144,7 +170,7 @@ if (isset($_POST['submit_ean'])) {
     //si en localización hay algo y no encaja con el regex mostramos error y no hacemos nada, si no, actualizamos ambas localizaciones a lo que venga en los inputs, o se vacia si no viene nada. Por ahora en reposición no hay norma así que no hacemos regex
     if (($localizacion) && !preg_match("/^[0-9a-zA-Z]{0,9}$/", $localizacion)){
         //$localizacion tiene algo pero no encaja en regex, lanzamos error
-        muestraErrorUbicaciones('Error: el formato de la localización es incorrecto<br>Solo puede componerse de hasta 9 números y letras');    
+        muestraErrorUbicaciones('Error: el formato de la localización es incorrecto<br>Solo puede componerse de hasta 9 números y letras.'.$mensaje_stock);    
         return;
     } else {        
         //comprobados los parámetros referidos a localización, son correctos, miramos si sesión nos indica que estamos haciendo rececpción y si es así sacamos también los datos para ello
@@ -178,7 +204,7 @@ if (isset($_POST['submit_ean'])) {
                     $unidades_recibidas = (int)$_POST['input_unidades_esperadas'];
 
                     if (!is_int($unidades_recibidas) || ($unidades_recibidas < 1)) {
-                        muestraErrorUbicaciones('Las unidades recibidas tienen que ser un número entero positivo. Ubicación procesada correctamente');
+                        muestraErrorUbicaciones('Las unidades recibidas tienen que ser un número entero positivo. Ubicación procesada correctamente.'.$mensaje_stock);
                         // muestraErrorUbicaciones('Las unidades recibidas tienen que ser un número entero positivo ('.$unidades_recibidas.' - '.gettype($unidades_recibidas).'). Ubicación procesada correctamente');    
                         return;
                     }
@@ -193,19 +219,19 @@ if (isset($_POST['submit_ean'])) {
                         }
                         
                     } else {
-                        muestraErrorUbicaciones('Se produjo un error al almacenar la recepción de materiales pero la ubicación se procesó correctamente');    
+                        muestraErrorUbicaciones('Se produjo un error al almacenar la recepción de materiales pero la ubicación se procesó correctamente.'.$mensaje_stock);    
                         return;
                     }
 
                 } else {
-                    muestraErrorUbicaciones('Se produjo un error al procesar la recepción de materiales pero la ubicación se procesó correctamente');    
+                    muestraErrorUbicaciones('Se produjo un error al procesar la recepción de materiales pero la ubicación se procesó correctamente.'.$mensaje_stock);    
                     return;
                 }
             }
 
             require_once("../views/templates/buscaproducto.php");
         } else {
-            muestraErrorUbicaciones('Se produjo un error al actualizar las localizaciones');    
+            muestraErrorUbicaciones('Se produjo un error al actualizar las localizaciones.'.$mensaje_stock);    
             return;
         }          
     }
@@ -236,7 +262,7 @@ if (isset($_POST['submit_ean'])) {
 }
 
 
-//función que recibe un ean o parte de el y busca el producto al que corresponde. Puede suceder que no encuentre producto correspondiente, que obtenga más de uno, ambos casos de error, o que encunetre uno solo, añadiendo el stock físico de almacén y su link a imagen y devolviendo los datos
+//función que recibe un ean o parte de el y busca el producto al que corresponde. Puede suceder que no encuentre producto correspondiente, que obtenga más de uno, ambos casos de error, o que encuentre uno solo, añadiendo el stock físico de almacén y su link a imagen y devolviendo los datos
 function obtenerProducto($ean) {    
 
     $sql_producto = "SELECT CONCAT(pro.id_product, '_', IFNULL(pat.id_product_attribute, 0)) as id,
@@ -391,7 +417,7 @@ function muestraErrorUbicaciones($mensaje_error, $id_producto = '', $id_product 
 }
 
 //función log de ubicaciones
-function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute = 0, $ean = '', $localizacion = '', $reposicion = '', $login = 0, $cerrar = 0, $buscar_ean = 0, $mostrar_ubicacion = 0, $submit_ok = 0, $incidencia = 0, $cancelar = 0, $mensaje_error = '', $es_recepciones = 0) {
+function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute = 0, $ean = '', $localizacion = '', $reposicion = '', $login = 0, $cerrar = 0, $buscar_ean = 0, $mostrar_ubicacion = 0, $submit_ok = 0, $incidencia = 0, $cancelar = 0, $mensaje_error = '', $es_recepciones = 0, $modificar_stock = 0) {
     //$id_empleado y $nombre_empleado los sacamos de $_SESSION
     $id_empleado = $_SESSION['id_empleado'];
     $nombre_empleado = $_SESSION['nombre_empleado'];       
@@ -409,6 +435,7 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
     nombre_employee,
     buscar_ean,
     mostrar_ubicacion,
+    modificar_stock,
     submit_ok,
     incidencia,
     cancelar,
@@ -428,6 +455,7 @@ function ubicacionLog($id_producto = '', $id_product = 0, $id_product_attribute 
     '$nombre_empleado', 
     $buscar_ean,
     $mostrar_ubicacion,
+    $modificar_stock,
     $submit_ok,
     $incidencia,
     $cancelar,    
@@ -598,7 +626,118 @@ function almacenaRecepciones($id_localizaciones_log, $id_product, $id_product_at
     return false;
 }
 
+//función para modificar el stock. Recibimos ids de producto, el stock original y el nuevo stock, calculamos y realizamos la operación y devolvemos true o false
+function modificarStock($id_product, $id_product_attribute, $new_stock, $original_stock) { 
+    //instanciamos el empleado para las funciones de stock manager, no es necesario
+    $id_empleado = $_SESSION['id_empleado'];
+    // $nombre_empleado = $_SESSION['nombre_empleado']; 
+    $employee = new Employee($id_empleado);
 
+    if (!Validate::isLoadedObject($employee)) {
+        $employee = null;
+    }
+
+    $id_producto = $id_product.'_'.$id_product_attribute;
+
+    $id_warehouse = 1; //almacén online
+    //creamos instancia de stockmanager y de warehouse para poder gestionar stock
+    $stock_manager = new StockManager(); 
+    $warehouse = new Warehouse($id_warehouse);
+
+    //sabemos que los stocks son diferentes, restamos al viejo el nuevo, y la diferenica la sumamos o restamos según el signo del resultado
+    $diferencia = $original_stock - $new_stock;
+
+    if ($diferencia < 0) {
+        //sumamos
+        $id_stock_mvt_reason = 13; //movimiento creado en Existencias-configuracion Sumar Ubicador
+        //para sumar stock tenemos que darle el price_te, o "coste" unitario. Existe una función, StockMvt::getLastPositiveStockMvt($id_product, $id_product_attribute) que te devuelve los datos del último movimiento positivo, y uno de los parámetros devueltos es el precio, pero si el producto aún no ha sido metido al almacén no devolverá precio al no haber movimiento. Prestashop solo permite sumar stock de una forma muy controlada y manual, y te obliga a añadir ese price_te, de modoque lo que vamos a hacer es, si no hay price_te sacar wholesale_price del producto y utilizarlo.
+        $last_sm = StockMvt::getLastPositiveStockMvt($id_product, $id_product_attribute);
+
+        //si hay stock mvt
+        if ($last_sm != false) {
+            $price_te = (float)$last_sm['price_te'];           
+        } else {
+            $price_te = Db::getInstance()->getValue("SELECT wholesale_price FROM lafrips_product WHERE id_product = $id_product");      
+        }
+
+        if($stock_manager->addProduct($id_product, $id_product_attribute, $warehouse, abs($diferencia), $id_stock_mvt_reason, $price_te, true, null, $employee)) {
+            $mensaje_error = 'UPDATE sumar '.abs($diferencia).'_'.$id_warehouse.' stock Ubicador'; 
+            
+            ubicacionLog($id_producto, $id_product, $id_product_attribute,'', '', '', 0, 0, 0, 0, 0, 0, 0, $mensaje_error, 0, 1);
+
+            // $sql_insert_localizaciones_log = "INSERT INTO lafrips_localizaciones_log
+            // (id_producto,
+            // id_product,
+            // id_product_attribute, 
+            // id_employee,
+            // nombre_employee, 
+            // modificar_stock,               
+            // mensaje_error,
+            // date_add)
+            // VALUES
+            // ('$id_producto',
+            // $id_product,
+            // $id_product_attribute,                      
+            // $id_empleado,
+            // '$nombre_empleado',  
+            // 1,                  
+            // '$mensaje_error',
+            // NOW())";
+        
+            // Db::getInstance()->Execute($sql_insert_localizaciones_log);
+
+            //actualizar stock_available tras la operación
+            StockAvailable::synchronize($id_product);
+
+            return true;
+
+        } else {
+            //no ha gestionado el stock
+            return false;
+        }  
+
+
+    } else {
+        //restamos
+        $id_stock_mvt_reason = 14; //movimiento creado en Existencias-configuracion Restar Ubicador        
+
+        if($stock_manager->removeProduct($id_product, $id_product_attribute, $warehouse, $diferencia, $id_stock_mvt_reason, true, null, 0, $employee)) {
+            $mensaje_error = 'UPDATE restar '.$diferencia.'_'.$id_warehouse.' stock Ubicador';   
+            
+            ubicacionLog($id_producto, $id_product, $id_product_attribute,'', '', '', 0, 0, 0, 0, 0, 0, 0, $mensaje_error, 0, 1);
+
+            // $sql_insert_localizaciones_log = "INSERT INTO lafrips_localizaciones_log
+            // (id_producto,
+            // id_product,
+            // id_product_attribute, 
+            // id_employee,
+            // nombre_employee, 
+            // modificar_stock,               
+            // mensaje_error,
+            // date_add)
+            // VALUES
+            // ('$id_producto',
+            // $id_product,
+            // $id_product_attribute,                      
+            // $id_empleado,
+            // '$nombre_empleado',   
+            // 1,                 
+            // '$mensaje_error',
+            // NOW())";
+        
+            // Db::getInstance()->Execute($sql_insert_localizaciones_log);
+
+            //actualizar stock_available tras la operación
+            StockAvailable::synchronize($id_product);
+
+            return true;
+
+        } else {
+            //no ha gestionado el stock
+            return false;
+        }  
+    }
+}
 
 
 ?>

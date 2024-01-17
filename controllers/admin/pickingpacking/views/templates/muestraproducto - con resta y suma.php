@@ -31,16 +31,13 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
           </p>
           <p class="card-text"> 
             <div class="row">
-              <!-- 03/01/2024 ponemos un input con la cantidad de stock físico para poder sumar/restar stock. El mismo value en un input hidden para comparar tras enviar el formulario -->
-              <form id="formulario_ubicaciones" action="ubicaciones.php" method="post">
-              <div class="col">            
-                <div class="input-group mb-3">
-                  <span class="input-group-text input_ubicacion">Stock</span>
-                  <input type="number" class="form-control input_ubicacion" id="input_stock" name="input_stock" value="<?= $producto['stock_fisico'] ?>"  onfocus="this.select()">
-                  <input type="hidden" id="input_stock_hidden" name="input_stock_hidden" value="<?= $producto['stock_fisico'] ?>">
-                </div>
+              <!-- 03/01/2024 Añadimos botones para sumar/restar stock -->
+              <div class="col-7">                        
+                <span id="restar" style="font-size: 25px; width: 45px;" class="badge badge-pill badge-danger modifica_stock"><b>-</b></span> 
+                Stock: <b><span id="stock_fisico" style="font-size: 22px;"><?= $producto['stock_fisico'] ?></span></b>
+                <span id="sumar" style="font-size: 22px; width: 45px;" class="badge badge-pill badge-success modifica_stock"><b>+</b></span>
               </div>
-              <div class="col">
+              <div class="col-5">
                 Consumo: <span style="font-size: 22px;" class="badge badge-pill badge-<?= $producto['badge'] ?>"><?= $producto['abc'] ?></span>                
               </div>
             </div> 
@@ -49,7 +46,7 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
       </div>
     
       <div class="col-sm-5 col-xs-5 col_ubicaciones col_ubicaciones_right">
-        <!-- <form id="formulario_ubicaciones" action="ubicaciones.php" method="post"> -->
+        <form id="formulario_ubicaciones" action="ubicaciones.php" method="post">
         <?php if ($recepciones) { ?> 
           <div class="card-body text-center card-recepciones"> 
             <div class="input-group mb-3 input-group-recepciones">
@@ -140,7 +137,7 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
             </div>  
             <div class="input-group mb-3 <?php if ($recepciones) { ?> input-group-recepciones<?php } ?>">
               <span class="input-group-text input_ubicacion">Reposición</span>
-              <input type="text" class="form-control input_ubicacion" name="input_reposicion" value="<?= $producto['reposicion'] ?>"   onfocus="this.select()">
+              <input type="text" class="form-control input_ubicacion" name="input_reposicion" value="<?= $producto['reposicion'] ?>">
             </div>
             <!-- coloco el id d producto en un input hidden para el proceso de actualización. Va compuesto de id_product e id_product_attribute -->
             <input type="hidden" name="id_producto" value="<?= $producto['id'] ?>">

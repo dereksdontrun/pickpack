@@ -23,17 +23,9 @@ include('header.php');
     <small><span class="capitalizar"><?= $_SESSION["funcionalidad"] ?></span> de La Frikilería</small>
 
     <?php
-    if ($mensaje_ok_stock || $mensaje_ok_ubicacion || $mensaje_ok_recepcion || $mensaje_warning_recepcion || $incidencia){
+    if ($mensaje_ok_ubicacion || $mensaje_ok_recepcion || $mensaje_warning_recepcion || $incidencia){
     ?>
     <p class="lead">
-    <?php
-        if ($mensaje_ok_stock){
-        ?>
-        <span style="font-size: 17px;" class="badge badge-pill badge-success">¡Stock actualizado!</span>
-        <?php
-        }
-        ?>
-
         <?php
         if ($mensaje_ok_ubicacion){
         ?>
