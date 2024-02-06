@@ -33,21 +33,6 @@ include('header.php');
   </div>    
 </div>
 
-<!-- 19/01/2024 Si gaveta_incidencias contiene una localización, mostramos aviso de que en previo intento de picking hubo incidencia y esto es lo que se almacenó como localización de gaveta de incidencia -->
-<?php if ($gaveta_incidencias && $gaveta_incidencias != ''){ ?>
-
-<div class="container container_mensajes">  
-  <div class="panel">    
-    <div class="list-group">
-      <!-- <h3>GAVETA INCIDENCIAS</h3>       -->
-      <div class="list-group-item text-center" style="color:black; background-color:#fff200; border:2px solid black;"> 
-        <p>GAVETA DE INCIDENCIAS:<br> <strong><?= $gaveta_incidencias ?></strong></p>               
-      </div>      
-    </div>
-  </div>
-</div>
-<br>
-<?php } ?>
 
 <!-- 03/11/2020 mostramos mensaje de warning avisando de que este pedido se encontraba en estado Paquete Enviado al abrir el picking y podría estar duplicado
 29/11/2022 añado el campo finalizado de lafrips_pick_pack que estará a 1 si se terminó el packing, independientemente del estado actual del pickpack -->
@@ -66,6 +51,7 @@ include('header.php');
 </div>
 <br>
 <?php } ?>
+
 
 <!-- mostramos los mensajes sobre el pedido si los hay. -->
 <?php if ($todos_mensajes_pedido){ ?>
@@ -232,8 +218,6 @@ include('header.php');
   <input type="hidden" name="numero_productos" value="<?= $numero_productos ?>">
   <!-- coloco el número de pedido en un input hidden para el proceso de Picking -->
   <input type="hidden" name="id_pedido" value="<?= $id_order ?>">
-  <!-- 17/01/2024 Si se produce incidencia y guardamos código de gaveta, se almacena aquí lo introducido en el prompt que se muestra al usuario -->
-  <input type="hidden" name="gaveta_incidencias" id="gaveta_incidencias">
   <!-- coloco los ids de pedido que correspondan a pedidos de caja sorpresa, si los hay, en un input hidden para el proceso de Picking. Primero hacemos array_unique del array donde se han guardado, y para enviar el array por post hay que serializarlo aquí y unserializarlo en el destino, usamos comillas simples porque serialize añade comillas dobles -->
   <?php  $ids_cajas = array_unique($ids_cajas);  ?>
   <input type="hidden" name="ids_cajas" value='<?= serialize($ids_cajas) ?>'>

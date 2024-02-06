@@ -138,30 +138,76 @@ $(function(){
     //         $('#span_picking_obsequio_no').show(); 
     //         $('#checkbox_picking_obsequio').prop("checked", false);  
     //     });
-    
+       
 
 });
 
 $(document).ready(function() {
-    //ponemos el color de fondo del input en función de si el valor es 0 o superior
-    if ($("#input_unidades_esperadas").val() < 1) {
-        $("#input_unidades_esperadas").css("background-color","#F8A1A4");
-    }
-    
-    //11/07/2023 Para Rececpcionador. Cuando el select de pedido de materiales cambie, obtenemos el value de la opción elegida y sacamos la cantidad y la ponemos en el input de unidades esperadas. Además ponemos en el span de unidades recibidas / esperadas los valores necesarios también.
-    //recibimos 'idsupplier_unidadesesperadas_unidadesrecibidas_unidadesesperadasreales'    
-    $("#select_pedido_materiales").change(function(){          
-        $("#input_unidades_esperadas").val(this.value.split("_")[3]);
-        $("#span_esperadas_recibidas").text(this.value.split("_")[2]+' / '+this.value.split("_")[1]);
-        
+    if ($("#es_recepcion").val() == 1) {
         //ponemos el color de fondo del input en función de si el valor es 0 o superior
-        if (this.value.split("_")[3] < 1) {
+        if ($("#input_unidades_esperadas").val() < 1) {
             $("#input_unidades_esperadas").css("background-color","#F8A1A4");
-        } else {
-            $("#input_unidades_esperadas").css("background-color","#FFFFFF");
         }
-    });
 
+        //24/10/2023 Comprobamos si hay un pedido seleccionado, si lo hay buscamos su mensaje de pedido y si este existe, hacemos visible el botón de mostrar mensaje
+        if ($("#select_pedido_materiales").val() == 0) {
+            //nos aseguramos de que botón mensaje sea hidden
+            $("#submit_supply_order_message").hide();
+        } else {
+            //sacamos el id de pedido para comprobar el value del input hidden que guarda su mensaje.         
+            var select_value = $("#select_pedido_materiales").val().split("_");
+            var id_supply_order = select_value[0];
+            console.log('mensaje pedido ' + $("#supply_order_message_"+id_supply_order).val());
+            $("#submit_supply_order_message").attr("data-value", id_supply_order);
+            //comprobamos si en el input hidden del pedido hay mensaje o venía vacío. Si estaba vacío no mostramos botón
+            if ($("#supply_order_message_"+id_supply_order).val() != '') {
+                $("#submit_supply_order_message").show();
+            } else {
+                $("#submit_supply_order_message").hide();
+            }          
+        }
+        
+        //11/07/2023 Para Rececpcionador. Cuando el select de pedido de materiales cambie, obtenemos el value de la opción elegida y sacamos la cantidad y la ponemos en el input de unidades esperadas. Además ponemos en el span de unidades recibidas / esperadas los valores necesarios también.
+        //recibimos 'idsupplier_unidadesesperadas_unidadesrecibidas_unidadesesperadasreales'    
+        $("#select_pedido_materiales").change(function(){          
+            $("#input_unidades_esperadas").val(this.value.split("_")[3]);
+            $("#span_esperadas_recibidas").text(this.value.split("_")[2]+' / '+this.value.split("_")[1]);
+            
+            //ponemos el color de fondo del input en función de si el valor es 0 o superior
+            if (this.value.split("_")[3] < 1) {
+                $("#input_unidades_esperadas").css("background-color","#F8A1A4");
+            } else {
+                $("#input_unidades_esperadas").css("background-color","#FFFFFF");
+            }
+
+            //24/10/2023 cambiamos el atributo data-value del botón de mensaje por el id de pedido. Nos aseguramos de mostrar el botón de mensaje, a menos que id_supply_order sea 0, lo que significa que el select está en "Selecciona pedido"
+            // document.getElementById("submit_supply_order_message").setAttribute("data-value", this.value.split("_")[0]);
+            // mostrar o esconde con javascript 
+            // document.getElementById("myButton").style.display = "block";  o "none"
+            $("#submit_supply_order_message").attr("data-value", this.value.split("_")[0]);
+            if (this.value.split("_")[0] == 0) {
+                $("#submit_supply_order_message").hide();
+            } else {
+                //comprobamos si en el input hidden del pedido hay mensaje o venía vacío. Si estaba vacío no mostramos botón
+                if ($("#supply_order_message_"+this.value.split("_")[0]).val() != '') {
+                    $("#submit_supply_order_message").show();
+                } else {
+                    $("#submit_supply_order_message").hide();
+                }            
+            }        
+        }); 
+    }   
+
+    //quiero impedir que se lance el formulario pulsando Enter
+    // NOOOO se puede, ya que el trigger que hace el scanner se interpreta como pulsar enter, y se para también. Quizás el scanner sea configurable, pero supongo que habría que configurar todos y esto será por defecto.
+    // $('#formulario_ubicaciones').on('keydown', function(event) {
+    //     //Enter (key code 13)
+    //     if (event.keyCode === 13) {
+    //         //paramos la ejecución
+    //         event.preventDefault();
+    //         console.log('Enter pulsado, paramos formulario.');
+    //     }
+    // });
 
     //revisamos que se reciban cantidades positivas, y avisamos cuando se supone que ya se ha recibido una cantidad superior a la esperada
     //además también avisamos si la cantidad es superior a 100, por si se escanea la gaveta sobre el input de stock
@@ -169,19 +215,66 @@ $(document).ready(function() {
     let isFormSubmitted = false;
 
     $('#formulario_ubicaciones').submit(function(event) {       
+        console.log('formulario submit');     
+        //event.preventDefault();   
+
+        //27/09/2023 Tenemos 3 botones submit, por defecto, si pulsamos Enter, o en nuestro caso el equivalente que es el escanner que lo dispara, el submit que "ejecuta" el formulario por defecto es el primero por orden en el html, es decir, submit_producto_ok. Aquí tenemos el problema de que si pulsamos Volver o Incidencia, también pasa por aquí y en esos casos no queremos que mire ni cantidades a recibir ni nada, solo que continue con el submit. Como hemos puesto esa medida de seguridad para caundo se pulsa dos veces muy rápido OK y después ejecutamos las comprobaciones, tengo que poner un if antes, que si el submittedButton.attr('name') es vovler o incidencia, no ejecute nada de eso y prosiga con eventdefault, es decir, nada dentro del if de esa condición, y el else es todo lo demás       
 
         var submittedButton = $(document.activeElement);
-        //seguimos si se ha hecho submit de ok comprobando el atributo name del botón de submit, volver o incidencia no cuentan
-        if (submittedButton.attr('name') == 'submit_producto_ok') {
-            //comprobamos el valor de isFormSubmitted, si no es false es que acabamos de pasar por aquí y enviamos a event.preventDefault
-            if (!isFormSubmitted) {
-                //pasamos la variable a true
-                isFormSubmitted = true;   
+        // console.log('submitted button name: '+submittedButton.attr('name'));
+        if ((submittedButton.attr('name') == 'submit_volver') || (submittedButton.attr('name') == 'submit_producto_incidencia')) {
+            //nada, quiero que el formulario se envíe
 
-                //22/08/2023 Primero comprobamos el value del select, si es 0 es que el producto está en más de un pedido y no lo han seleccionado, mostramos error y no pueden continuar
+        } else {
+            //seguimos si se ha hecho submit de ok comprobando el atributo name del botón de submit, volver o incidencia no cuentan
+            if (submittedButton.attr('name') == 'submit_producto_ok') {
+                // console.log('formulario submit_producto_ok');
+                //comprobamos el valor de isFormSubmitted, si no es false es que acabamos de pasar por aquí y enviamos a event.preventDefault
+                if (!isFormSubmitted) {
+                    //pasamos la variable a true
+                    isFormSubmitted = true;                           
+                    
+                } else {
+                    // console.log('formulario preventDefault');
+                    event.preventDefault();
+                }
+            } 
+
+            //04/01/2024 Comprobamos el input de stock para saber si se ha modificado y en ese caso, si se pone una cantidad superior a 100 mostrar mensaje de alerta. Impedimos valores negativos.
+            //obtenemos el value del input id input_stock con el de input_stock_hidden. Si son iguales no se ha modificado stock
+            if ($("#input_stock").val() != $("#input_stock_hidden").val()) {
+                console.log('stock_fisico de '+$("#input_stock_hidden").val()+' a '+$("#input_stock").val());                
+                
+                //comprobamos que el número en input_stock es entero, no sea negativo, y si es mayor de 99 que se confirme
+                if (!$.isNumeric($("#input_stock").val()) || $("#input_stock").val() % 1 !== 0) {
+                    alert('Error: El stock físico debe ser un número entero');
+                    //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK   
+                    isFormSubmitted = false;
+                    event.preventDefault();  
+                } else if ($("#input_stock").val() < 0) {
+                    alert('Error: El stock físico no puede ser negativo');
+                    //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK   
+                    isFormSubmitted = false;
+                    event.preventDefault();                 
+                } else if ($("#input_stock").val() > 99) {
+                    //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
+                    if(!confirm("Atención, ¿Estas segur@ de querer modificar el stock a "+$("#input_stock").val()+" unidades?")){
+                        //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK                         
+                        isFormSubmitted = false;    
+                        event.preventDefault();  
+                    }
+                }
+            }
+                        
+            //22/08/2023 Primero comprobamos el value del select, si es 0 es que el producto está en más de un pedido y no lo han seleccionado, mostramos error y no pueden continuar
+            //27/09/2023 Sacamos todo este if else de if (submittedButton.attr('name') == 'submit_producto_ok') porque si se usa el scanner nunca entra ahí al no ser 'submit_product_ok', de modo que aquí debajo, por si acaso, pasamos isFormSubmitted a false en caso de que sea necesario, aunque quizás no hayamos entrado por 'submit_product_ok'
+            //en el front en el formulario de ubicaciones/recepciones tenemos un input hidden de id "es_recepcion" que vale 1 si lo es y 0  si no. Para evitar procesar todo esto si estamos en ubicaciones, comprobamos ese value, y si es 0 no entramos aquí.
+            // console.log("es_recepcion: "+$("#es_recepcion").val());
+            if ($("#es_recepcion").val() == 1) {
+                console.log("es_recepcion");
                 if ($("#select_pedido_materiales").val() == 0) {
                     alert('Atención: este producto se encuentra en más de un pedido de materiales, selecciona uno para continuar');
-                    //"reseteamos" la variable para poder entrar al envío del formulario   
+                    //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK  
                     isFormSubmitted = false;
                     event.preventDefault(); 
                 } else {
@@ -195,33 +288,45 @@ $(document).ready(function() {
                     //si unidades a recibir es menor que 1 mostramos alert y no permitimos seguir. 
                     if (unidades_a_recibir < 1) {
                         alert('Error: La cantidad a recibir ha de ser positiva');
-                        //"reseteamos" la variable para poder entrar al envío del formulario   
+                        //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK   
                         isFormSubmitted = false;
                         event.preventDefault();                 
                     } else if (unidades_a_recibir > 100) {
                         //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
                         if(!confirm("Atención, ¿Estas segur@ de querer recepcionar tantas unidades?")){
-                            //"reseteamos" la variable para poder entrar al envío del formulario                         
+                            //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK                         
                             isFormSubmitted = false;    
                             event.preventDefault();  
                         }
                     } else if ((unidades_a_recibir + unidades_ya_recibidas) > unidades_esperadas) {
                         //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
                         if(!confirm("Atención, ¿Quieres recepcionar más unidades de las esperadas?")){
-                            //"reseteamos" la variable para poder entrar al envío del formulario                     
+                            //por si acaso "reseteamos" la variable para poder entrar al envío del formulario, en caso de que se haya entrado pulsando OK                    
                             isFormSubmitted = false;   
                             event.preventDefault();    
                         }
                     }
-                }                
-                
-            } else {
-                event.preventDefault();
+                }   
             }
-        }          
+              
+        }        
+        
+        // console.log('formulario submit fin');
                     
     });
+    
+
 });
+
+//24/10/2023 Función que se llama al hacer click sobre el botón Mensaje de pedido de materiales
+function muestraMensajePedido() {
+    var button = document.getElementById("submit_supply_order_message");
+    var id_supply_order = button.getAttribute("data-value");
+    var message = document.getElementById("supply_order_message_"+id_supply_order).value;
+
+    alert(message);
+}
+
 
 // $(function(){
 

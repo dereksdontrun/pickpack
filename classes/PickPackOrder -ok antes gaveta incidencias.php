@@ -182,7 +182,7 @@ class PickPackOrder extends ObjectModel
      */
     public $packing_finalizado_bulk;
 
-    //23/11/2020 Añado variable para saber si el pedido contiene una caja sorpresa (vale 1) o es una caja sorpresa (vale 2)
+    //23/11/2020 Añado variable ara saber si el pedido contiene una caja sorpresa (vale 1) o es una caja sorpresa (vale 2)
     /**
      * caja sorpresa
      *
@@ -190,13 +190,6 @@ class PickPackOrder extends ObjectModel
      */
     public $caja_sorpresa;
     
-    //19/01/2024 Añado variable con la localización de gaveta de incidencias para pickings con incidencias
-    /**
-     * Gaveta Incidencias
-     *
-     * @var string
-     */
-    public $gaveta_incidencias;
 
     /**
      * @see ObjectModel::$definition
@@ -232,7 +225,6 @@ class PickPackOrder extends ObjectModel
             'picking_finalizado_bulk' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
             'packing_finalizado_bulk' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
             'caja_sorpresa' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
-            'gaveta_incidencias' => array('type' => self::TYPE_STRING, 'size' => 32),
         ),
     );
 

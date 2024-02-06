@@ -165,11 +165,6 @@
   {* Panel con info de picking *}
   <div class="panel clearfix">
     <h3>Picking</h3>
-    {if $objeto_pick_pack->gaveta_incidencias}
-      <p>Gaveta Incidencias: <strong><span class="badge badge-pill badge-warning">{$objeto_pick_pack->gaveta_incidencias}</span></strong></p>
-      <hr>
-    {/if}
-
     {if $objeto_pick_pack->nombre_employee_picking}
       <p>Picking realizado por <strong>{$objeto_pick_pack->nombre_employee_picking}</strong></p>
     {else} 

@@ -160,14 +160,13 @@ function infoOrder($id_order){
   //25/04/2022 Si el pedido de dropshipping tiene que pasar primero por almacén si queremos hacer picking del producto, de modo que en esta consulta indicamos el valor de envio_almacen en lafrips_dropshipping_address si es que existe el pedido dropshipping
   //24/05/2022 obtenemos un indicador pedido_webservice si el pedido está en la tabla lafrips_webservice_orders para mostrar mensaje en packing 
   //29/11/2022 Obtenemos el campo finalizado de lafrips_pisck_pack para mostrar mensaje de que el pedido terminó el packing en algún momento, esté en el estado que esté ahora. También date_fin_packing
-  //19/01/2024 sacamos el contenido de gaveta_incidencias en lafrips_pickpack por si hay una locliazión almacenada
   $sql_info_pedido = "SELECT ord.id_order AS id_order, ord.id_customer AS id_cliente, CONCAT(cus.firstname,' ', cus.lastname) AS nombre_cliente, CONCAT(adr.address1,' ', adr.address2) AS direccion, adr.postcode AS codigo_postal, 
   adr.city AS ciudad, sta.name AS provincia, col.name AS pais, ord.date_add AS fecha_pedido, car.name AS transporte, 
   ord.module AS module, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ppe.nombre_estado AS 'estado_pickpack', ord.gift AS regalo, ord.id_cart AS id_cart, ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2,
   IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping,
   IFNULL((SELECT envio_almacen FROM lafrips_dropshipping_address WHERE deleted = 0 AND id_order = ord.id_order), 0) AS dropshipping_envio_almacen,
   IF((SELECT COUNT(id_webservice_order) FROM lafrips_webservice_orders WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_webservice,
-  pip.finalizado AS finalizado, pip.date_fin_packing AS fecha_fin_packing, pip.gaveta_incidencias AS gaveta_incidencias 
+  pip.finalizado AS finalizado, pip.date_fin_packing AS fecha_fin_packing  
   FROM lafrips_customer cus
   JOIN lafrips_orders ord ON ord.id_customer = cus.id_customer
   JOIN lafrips_address adr ON ord.id_address_delivery = adr.id_address
@@ -506,8 +505,7 @@ function generaComentario($tipo, $action, $id_order = 0 ) {
 }
 
 //función que marca los resultados del picking/packing en el pedido en lafrips_pickpack. 
-//19/01/2024 Añadimos parámetro gaveta_incidencias que traerá la localización de la gaveta donde se depositan los productos en caso de haber incidencia en un picking, como es opcional se trata como tal. De momento solo para picking.
-function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obsequio = 0, $regalo = 0, $es_caja = 0, $gaveta_incidencias = '') {
+function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obsequio = 0, $regalo = 0, $es_caja = 0) {
   //obtenemos el id de la tabla pickpack
   $id_pickpack = PickPackOrder::getIdPickPackByIdOrder($id_order);
   
@@ -518,13 +516,7 @@ function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obseq
         $id_estado_order = 3;
         $date_fin = '"0000-00-00 00:00:00"';
         $finalizado = 0;
-        //19/01/2024 insertamos localización de la gaveta de incidencias si la hemos recibido
-        if ($gaveta_incidencias) {
-          $incidencia_proceso = ' incidencia_picking = 1 , gaveta_incidencias = "'.pSQL($gaveta_incidencias).'" ,';
-        } else {
-          $incidencia_proceso = ' incidencia_picking = 1 ,';
-        }
-        
+        $incidencia_proceso = ' incidencia_picking = 1 ,';
       } elseif ($action == 'packing') {
         //ponemos o dejamos el estado Incidencia Packing y marcamos incidencia_packing = 1
         $id_estado_order = 5;

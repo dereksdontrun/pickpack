@@ -68,6 +68,7 @@ $(function(){
         //si se ha pulsado submit_finpicking revisamos si necesita confirmación    
         if ($(this).attr('name') == 'submit_finpicking'){
                 
+            //17/01/2024 Cuando cerremos un picking con incidencia, en lugar de pedir solo confirmación vamos a mostrar un prompt para meter un comentario, que debería ser el código de la gaveta donde se dejen los productos que si se han encontrado. El contenido se asignará a un input hidden y luego se creará en el controlador un mensaje de pedido con dicho código para verlo cuando vuelvan a hacer el picking. Hay que contar con la posibilidad de que solo haya un producto pero varias unidades y falte alguna, y como no sabemos cuantas han encontrado no sabemos si la incidencia es que no hay ninguna o no están todas, de modo que mostramos siempre el prompt. El usuario decidirá si meter o no algo en el comentario dependiendo de si ha recogido algún producto.
             $('#formulario_picking').submit(function(event){
                 //esto me saca los radio button marcados, con su nombre y value
                 // var radioValues = ''; 
@@ -77,19 +78,51 @@ $(function(){
                 // alert(radioValues);
         
                 //variable para poner a 1 si algún value de radio button es 0, es decir, marcada no OK
-                var no_ok = 0;
+                var no_ok = 0;                
                 $('input[type="radio"]:checked').each(function() {
                     if ($(this).val() == 0){
                         no_ok = 1;
                     }
                 });
         
-                //si no_ok vale 1 mostrar mensaje de confirmación
+                //si no_ok vale 1 mostrar prompt para meter código de gaveta si hay algún producto recogido
                 if (no_ok == 1){
-                    //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
-                    if(!confirm("¿Quieres finalizar el Picking como incidencia?")){
-                    event.preventDefault();
-                    }
+                    //mostramos prompt para escanear gaveta de incidencias, y guardamos lo introducido en input hidden id "gaveta_incidencias"
+                    var codigo_gaveta_incidencias = prompt("Vas a cerrar Picking como incidencia, si vas a reservar algún producto introduce el código de la gaveta para incidencias:");
+                    console.log("codigo gaveta:", codigo_gaveta_incidencias);
+
+                    //codigo_gaveta_incidencia será el valor introducido. Si no se introduce nada pero se pulsa Aceptar será <empty string>, y si se pulsa Cancelar, será null. Si es null no permitimos continuar, si está vacío continuamos sin más, y si tiene valor lo guardamos en input hidden gaveta_incidencias
+                    if (codigo_gaveta_incidencias === null) {
+                        //pulsado Cancelar
+                        event.preventDefault();
+                    } else if (codigo_gaveta_incidencias !== "") {                        
+                        //el prompt contiene algo, si es un número lo guardamos en input hidden, si no mostramos error. Como el contenido del prompt llega aquí como string, pasamos un regex que asegure que solo contiene números. d digits
+                        var number_regex = /^\d{1,8}$/;
+                        if (number_regex.test(codigo_gaveta_incidencias)) {
+                            console.log("es un número : "+codigo_gaveta_incidencias);
+                            $("#gaveta_incidencias").val(codigo_gaveta_incidencias);
+                            // event.preventDefault();
+                        } else {
+                            console.log("no es un número : "+codigo_gaveta_incidencias);
+                            alert('Error: El código de la gaveta debe ser un número entero de hasta 8 cifras');
+                            event.preventDefault(); 
+                        }                                          
+                       
+                    } 
+                    //si no había nada sigue el proceso de submit
+                    
+
+                    //si ningún producto fue marcado ok, ya sea porque no hay más o porque todos son no ok solo se muestra mensaje de confirmación
+                    // if (si_ok == 0){
+                    //     //si no se pulsa cancelar, continua, si no, hace event.prevendefault()
+                    //     if(!confirm("¿Quieres finalizar el Picking como incidencia?")){
+                    //         event.preventDefault();
+                    //     }
+                    // } else {
+                    //     //si hay algún producto no ok y alguno si ok, mostramos prompt para escanear gaveta de incidencias, y guardamos lo introducido en input hidden id "gaveta_incidencias"
+                    //     var codigo_gaveta_incidencias = prompt("Vas a cerrar Picking como incidencia, introduce el código de la gaveta para incidencias:");
+                    //     console.log("codigo gaveta:", codigo_gaveta_incidencias);
+                    // }
                 }        
             });
             

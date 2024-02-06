@@ -139,16 +139,6 @@ if(isset($_GET['id_empleado'])){
     if ($_POST['ids_cajas']){
         $ids_cajas = unserialize($_POST['ids_cajas']);
     }
-    //18/01/2024 Hemos añadido un inpit hidden donde almacenar el código de la gaveta usada para dejar productos en caso de incidencia. Comprobamos el value y si hay algo generaremos un mensaje en el pedido donde guardaremos el código de modo que este se verá en el siguiente picking del pedido. No debería llegar nada que no sea un número de máximo 8 cifras. Guardaremos la localización también en lafrips_pick_pack    
-    if ($_POST['gaveta_incidencias'] && !is_null($_POST['gaveta_incidencias']) && $_POST['gaveta_incidencias'] !==''){
-        $gaveta_incidencias = $_POST['gaveta_incidencias'];
-
-        pickpackLog($id_order, 0, 'gaveta_incidencias_picking', 0, 0, 0, 1, 0, 0, '', $gaveta_incidencias);
-
-        // mensajePedido($id_order, $gaveta_incidencias); Por ahora no generamos mensaje dentro del pedido, ya que la localización de la gaveta se verá tanto al hacer picking como dentro de gestion pickpack
-    } else {
-        $gaveta_incidencias = '';
-    }
     //para no sobreescribir el comentario, lo añadiremos al anterior si fuera la segunda vez o más que pasamos por aquí o no insertaremos nada si no llega ninguno. Añadimos persona que lo escribe y fecha. Llamamos a función generaComentario() en herramientas
     if ($_POST['comentario'] && $_POST['comentario'] !==''){
         $comentario_picking = generaComentario('pedido', 'picking');        
@@ -200,8 +190,7 @@ if(isset($_GET['id_empleado'])){
     }
         
     //finalmente mandamos a procesar el pedido base. finalizaOrder() devuelve true si hizo el update correcto
-    //19/01/2024 Añadimos el parámetro gaveta_incidencias para guardar la localización en caso de incidencia en picking. De moemnto solo para pedido base, no por cajas.
-    if (finalizaOrder($id_order, 'picking', $incidencia, $comentario_picking, $obsequio, 0, 0, $gaveta_incidencias)){
+    if (finalizaOrder($id_order, 'picking', $incidencia, $comentario_picking, $obsequio)){
         //una vez guardado el resultado del picking, volvemos a la función inicioPicking() para saber si hay que continuar con otro pedido o ya hemos finalizado
         inicioPicking();
         // if ($_SESSION['varios'] && !empty($_SESSION['ids_pedidos'])) {
@@ -301,7 +290,6 @@ function procesaOrder($info_pedido) {
     $estado_pickpack = $info_pedido[0]['estado_pickpack'];
     $finalizado = $info_pedido[0]['finalizado'];
     $fecha_fin_packing = $info_pedido[0]['fecha_fin_packing'];
-    $gaveta_incidencias = $info_pedido[0]['gaveta_incidencias'];
 
     // Número de pedidos del cliente
     $sql_numero_pedidos = "SELECT COUNT(id_order) AS num_pedidos FROM lafrips_orders WHERE id_customer = ".$id_cliente." AND valid = 1;";
