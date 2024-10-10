@@ -306,6 +306,8 @@ function procesaOrder($info_pedido) {
     $dropshipping_envio_almacen = $info_pedido[0]['dropshipping_envio_almacen'];
     $pedido_webservice = $info_pedido[0]['pedido_webservice'];
     $nota_sobre_cliente = $info_pedido[0]['nota_sobre_cliente'];
+    //10/10/2024 Miramos si el grupo de cliente es Sith (id_group 7), en cuyo caso mostraremos un warning
+    $customer_id_default_group = $info_pedido[0]['grupo_cliente'];    
     if ($info_pedido[0]['tlfno1'] != "") {
         $telefono = $info_pedido[0]['tlfno1'];
     } else {

@@ -26,11 +26,7 @@ include('header.php');
     <?php }  ?>       
     <div class="row"> 
         <div class="panel datos_cliente col-md-4">
-            <address>  
-                <!-- 10/10/2024 sacamos grupo por defecto de cliente para mostrar warning si es Sith -->
-            <?php if ($customer_id_default_group == 7){ ?>
-                <span class="badge badge-pill badge-danger" style="font-size: 150%;">CLIENTE SITH</span><br>
-            <?php }  ?>          
+            <address>          
             <strong><?= $nombre_cliente ?></strong><br>
             <?= $direccion ?><br>
             <?= $codigo_postal ?> <?= $ciudad ?> - <?= $provincia ?> - <?= $pais ?><br>

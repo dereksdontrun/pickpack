@@ -41,7 +41,15 @@ if ($_SESSION["funcionalidad"] == 'recepciones') {
                 </div>
               </div>
               <div class="col">
-                Consumo: <span style="font-size: 22px;" class="badge badge-pill badge-<?= $producto['badge'] ?>"><?= $producto['abc'] ?></span>                
+                <div class="row">
+                  <div class="col-6">
+                    Consumo: <br><span style="font-size: 22px;" class="badge badge-pill badge-<?= $producto['badge'] ?>"><?= $producto['abc'] ?></span>
+                  </div>                
+                  <!-- 06/02/2024 Añadimos stock disponible online (disponible menos físico tienda) para saber si el producto está en pedidos de cliente -->
+                  <div class="col-6">
+                    Disponible: <br><span style="font-size: 22px;" class="badge badge-pill badge-info"><?= $producto['stock_disponible_online'] ?></span>
+                  </div>   
+                </div>             
               </div>
             </div> 
           </p>     

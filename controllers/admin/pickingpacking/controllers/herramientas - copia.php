@@ -44,6 +44,8 @@ function obtenerIdOrder($pedido){
 
       //18/10/2021 Hemos añadido DHL. Al escanear la etiqueta sale el tracking sin más, de 7 cifras, con lo que se detecta sin tener que buscar en el resultado del escaneo.
 
+      //14/06/2024 Añadimos UPS, parece que el código al escanear las etiqeutas es el mismo que el tracling con lo que de momento no haría falta hacer nada ya que lo encuentra directamente en lafrips_order_carrier
+
     if (strlen($pedido) > 6){
       //si lo introducido es más de 6 caracteres primero buscamos la coincidencia completa
       $sql_busca_pedido_desde_tracking = 'SELECT id_order FROM lafrips_order_carrier WHERE tracking_number = "'.$pedido.'";';
@@ -160,13 +162,14 @@ function infoOrder($id_order){
   //25/04/2022 Si el pedido de dropshipping tiene que pasar primero por almacén si queremos hacer picking del producto, de modo que en esta consulta indicamos el valor de envio_almacen en lafrips_dropshipping_address si es que existe el pedido dropshipping
   //24/05/2022 obtenemos un indicador pedido_webservice si el pedido está en la tabla lafrips_webservice_orders para mostrar mensaje en packing 
   //29/11/2022 Obtenemos el campo finalizado de lafrips_pisck_pack para mostrar mensaje de que el pedido terminó el packing en algún momento, esté en el estado que esté ahora. También date_fin_packing
+  //19/01/2024 sacamos el contenido de gaveta_incidencias en lafrips_pickpack por si hay una locliazión almacenada
   $sql_info_pedido = "SELECT ord.id_order AS id_order, ord.id_customer AS id_cliente, CONCAT(cus.firstname,' ', cus.lastname) AS nombre_cliente, CONCAT(adr.address1,' ', adr.address2) AS direccion, adr.postcode AS codigo_postal, 
   adr.city AS ciudad, sta.name AS provincia, col.name AS pais, ord.date_add AS fecha_pedido, car.name AS transporte, 
   ord.module AS module, ord.payment AS metodo_pago, osl.name AS estado_prestashop, ppe.nombre_estado AS 'estado_pickpack', ord.gift AS regalo, ord.id_cart AS id_cart, ord.gift_message AS mensaje_regalo, cus.note AS nota_sobre_cliente, adr.phone_mobile AS tlfno1, adr.phone AS tlfno2,
   IF((SELECT COUNT(id_dropshipping) FROM lafrips_dropshipping WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_dropshipping,
   IFNULL((SELECT envio_almacen FROM lafrips_dropshipping_address WHERE deleted = 0 AND id_order = ord.id_order), 0) AS dropshipping_envio_almacen,
   IF((SELECT COUNT(id_webservice_order) FROM lafrips_webservice_orders WHERE id_order = ord.id_order) < 1, 0, 1) AS pedido_webservice,
-  pip.finalizado AS finalizado, pip.date_fin_packing AS fecha_fin_packing  
+  pip.finalizado AS finalizado, pip.date_fin_packing AS fecha_fin_packing, pip.gaveta_incidencias AS gaveta_incidencias 
   FROM lafrips_customer cus
   JOIN lafrips_orders ord ON ord.id_customer = cus.id_customer
   JOIN lafrips_address adr ON ord.id_address_delivery = adr.id_address
@@ -505,7 +508,9 @@ function generaComentario($tipo, $action, $id_order = 0 ) {
 }
 
 //función que marca los resultados del picking/packing en el pedido en lafrips_pickpack. 
-function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obsequio = 0, $regalo = 0, $es_caja = 0) {
+//19/01/2024 Añadimos parámetro gaveta_incidencias que traerá la localización de la gaveta donde se depositan los productos en caso de haber incidencia en un picking, como es opcional se trata como tal. De momento solo para picking.
+//18/03/2024 Tenemos que cambiar el estado de Prestashop a Etiquetado Picking (id 43) que indica que ha habido incidencia durante el picking, cuando action sea picking e incidencia sea 1, y es_caja sea 0 ya que lo haremos solo con el pedido base en caso de tener cajas sorpresa
+function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obsequio = 0, $regalo = 0, $es_caja = 0, $gaveta_incidencias = '') {
   //obtenemos el id de la tabla pickpack
   $id_pickpack = PickPackOrder::getIdPickPackByIdOrder($id_order);
   
@@ -516,7 +521,22 @@ function finalizaOrder($id_order, $action, $incidencia, $comentario = '', $obseq
         $id_estado_order = 3;
         $date_fin = '"0000-00-00 00:00:00"';
         $finalizado = 0;
-        $incidencia_proceso = ' incidencia_picking = 1 ,';
+        //19/01/2024 insertamos localización de la gaveta de incidencias si la hemos recibido
+        if ($gaveta_incidencias) {
+          $incidencia_proceso = ' incidencia_picking = 1 , gaveta_incidencias = "'.pSQL($gaveta_incidencias).'" ,';
+        } else {
+          $incidencia_proceso = ' incidencia_picking = 1 ,';
+        }
+
+        //18/03/2024 Si es incidencia picking, y no es caja, lo cambiamos de estado en Prestashop
+        if (!$es_caja) {
+          if (cambiaEstadoIncidencia($id_order, $gaveta_incidencias)) {
+            pickpackLog($id_order, 0, 'Cambio Incidencia Picking', 0, 0, 0, 1, 0, 0, 'Cambio estado Incidencia Picking correcto');
+          } else {
+            pickpackLog($id_order, 0, 'Cambio Incidencia Picking', 0, 0, 0, 1, 0, 0, 'ERROR cambio estado Incidencia Picking');
+          }
+        }
+        
       } elseif ($action == 'packing') {
         //ponemos o dejamos el estado Incidencia Packing y marcamos incidencia_packing = 1
         $id_estado_order = 5;
@@ -584,7 +604,7 @@ function pickpackLog($id_order = 0, $caja = 0, $proceso, $abrir = 0, $primera_ap
   $id_empleado = $_SESSION['id_empleado'];
   $nombre_empleado = $_SESSION['nombre_empleado'];
   $varios = isset($_SESSION['varios']) ? $_SESSION['varios'] : 0;
-
+  
   if ($id_order) {
     $id_estado_pickpack = PickPackOrder::getIdEstadoPickPackByIdOrder($id_order);
     $order = new Order($id_order);
@@ -649,5 +669,73 @@ function getProductEan($id_product, $id_product_attribute) {
   return Db::getInstance()->getValue($sql_busca_ean);  
 }
 
+
+function cambiaEstadoIncidencia($id_order, $gaveta_incidencias) {
+  $order = new Order($id_order);
+  $estado_inicial = $order->current_state;
+  //cambiamos estado de orden a Etiquetado Picking, id 43 ponemos id_employee 44 que es Automatizador, para log
+  $history = new OrderHistory();
+  $history->id_order = $id_order;
+  $history->id_employee = $_SESSION['id_empleado'];
+  //comprobamos si ya tiene el invoice, payment etc, porque puede duplicar el método de pago. hasInvoice() devuelve true o false, y se pone como tercer argumento de changeIdOrderState(). Tenemos instanciado el pedido en $this->order        
+  $use_existing_payment = !$order->hasInvoice();
+  $history->changeIdOrderState(43, $id_order, $use_existing_payment); 
+  $history->add(true);
+  if ($history->save()) {
+    $insert_frik_pedidos_cambiados = "INSERT INTO frik_pedidos_cambiados 
+    (id_order, estado_inicial, estado_final, proceso, date_add) 
+    VALUES ($id_order ,
+    $estado_inicial ,
+    43 ,    
+    'A Etiquetado Picking - Incidencia Picking - SemiAutomático',
+    NOW())";
+
+    Db::getInstance()->Execute($insert_frik_pedidos_cambiados);
+
+    //generamos mensaje para pedido
+    if (!$gaveta_incidencias) {
+      $gaveta = "Gaveta Incidencia No Introducida";
+    } else {
+      $gaveta = "Gaveta Incidencia = ".$gaveta_incidencias;
+    }
+    $mensaje = "Cambio Estado a Etiquetado Picking (Incidencia Picking) - ".$gaveta." 
+    ".$_SESSION['nombre_empleado']." - ".date("d-m-Y H:i:s");
+    //generamos un nuevo customer_thread si no lo hay  
+    $customer = new Customer($order->id_customer);                
+    //si existe ya un customer_thread para este pedido lo sacamos
+    $id_customer_thread = CustomerThread::getIdCustomerThreadByEmailAndIdOrder($customer->email, $id_order);            
+
+    if ($id_customer_thread) {
+        //si ya existiera lo instanciamos para tener los datos para el mensaje
+        $ct = new CustomerThread($id_customer_thread);
+    } else {
+        //si no existe lo creamos
+        $ct = new CustomerThread();
+        $ct->id_shop = 1; // (int)$this->context->shop->id;
+        $ct->id_lang = 1; // (int)$this->context->language->id;
+        $ct->id_contact = 0; 
+        $ct->id_customer = $order->id_customer;
+        $ct->id_order = $order->id;
+        //$ct->id_product = 0;
+        $ct->status = 'open';
+        $ct->email = $customer->email;
+        $ct->token = Tools::passwdGen(12);  // hay que generar un token para el hilo
+        $ct->add();
+    }     
+
+    if ($ct->id){         
+        $cm_interno_cambio_estado = new CustomerMessage();
+        $cm_interno_cambio_estado->id_customer_thread = $ct->id;
+        $cm_interno_cambio_estado->id_employee = $_SESSION['id_empleado']; 
+        $cm_interno_cambio_estado->message = $mensaje;
+        $cm_interno_cambio_estado->private = 1;                    
+        $cm_interno_cambio_estado->add();
+    }
+
+    return true;
+  }
+
+  return false;  
+}
 
 ?>

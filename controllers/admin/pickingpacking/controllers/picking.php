@@ -280,6 +280,8 @@ function procesaOrder($info_pedido) {
     $id_order = $info_pedido[0]['id_order'];
     $id_cliente = $info_pedido[0]['id_cliente'];
     $nombre_cliente = $info_pedido[0]['nombre_cliente'];
+    //10/10/2024 Miramos si el grupo de cliente es Sith (id_group 7), en cuyo caso mostraremos un warning
+    $customer_id_default_group = $info_pedido[0]['grupo_cliente'];    
     $direccion = $info_pedido[0]['direccion'];
     $codigo_postal = $info_pedido[0]['codigo_postal'];
     $ciudad = $info_pedido[0]['ciudad'];
@@ -308,7 +310,9 @@ function procesaOrder($info_pedido) {
     $numero_pedidos = Db::getInstance()->ExecuteS($sql_numero_pedidos);
     $numero_pedidos = $numero_pedidos[0]['num_pedidos'];  
 
-    $todos_mensajes_pedido = mensajesOrder($id_order);    
+    //18/03/2024 Vamos a no mostrar ningún mensaje en el pickin g de momento
+    // $todos_mensajes_pedido = mensajesOrder($id_order);  
+    $todos_mensajes_pedido = "";  
 
     //info de productos en pedido. Aquí obtenemos los productos del pedido base. Si hay una caja aparece como caja, no su contenido. Enviamos parámetro que indica si el pedido es dropshipping y si sería entrega en almacén
     $productos_pedido = infoProducts($id_order, 0, 0, $dropshipping_envio_almacen, $pedido_dropshipping);
@@ -484,7 +488,7 @@ function procesaProductos() {
                 AND id_product_attribute = '.$id_product_attribute.'
                 AND id_pickpack_order = '.$id_pedido_producto;
 
-            $id_pickpack_productos = Db::getInstance()->getValue($sql_busca_pickpack_product, $use_cache = true);
+            $id_pickpack_productos = Db::getInstance()->getValue($sql_busca_pickpack_product);
 
             if ($id_pickpack_productos) {
                 $sql_update_producto = 'UPDATE lafrips_pick_pack_productos 

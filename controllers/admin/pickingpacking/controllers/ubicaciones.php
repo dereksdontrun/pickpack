@@ -278,7 +278,7 @@ function obtenerProducto($ean) {
     WHEN con.abc = 'B' THEN 'warning'
     ELSE 'success'
     END AS badge,
-    con.consumo AS consumo
+    con.consumo AS consumo, ava.quantity AS stock_disponible
     FROM lafrips_stock_available ava
     JOIN lafrips_product pro ON pro.id_product = ava.id_product
     JOIN lafrips_product_lang pla ON pro.id_product = pla.id_product AND pla.id_lang = 1
@@ -313,12 +313,15 @@ function obtenerProducto($ean) {
         }        
         
     } else {
-        //devuelve un producto y solo uno. Obtenemos su stock físico y devolvemos todos los datos
+        //devuelve un producto y solo uno. Obtenemos su stock físico y su stock disponible online (disponible menos tienda) y devolvemos todos los datos
         $stock_manager = new StockManager();
 
         //el foreach solo se va a recorrer una vez, de modo que hacemos el return dentro devolviendo $prod
         foreach ($producto as &$prod) {
             $prod['stock_fisico'] = (int) $stock_manager->getProductPhysicalQuantities($prod['id_product'], $prod['id_product_attribute'], 1,true);
+
+            //stock disponible online, es el disponible total restando el físico de tienda
+            $prod['stock_disponible_online'] = $prod['stock_disponible'] - (int) $stock_manager->getProductPhysicalQuantities($prod['id_product'], $prod['id_product_attribute'], 4,true);
             			
             $image = Image::getCover((int)$prod['id_product']);			
             $link = new Link;
