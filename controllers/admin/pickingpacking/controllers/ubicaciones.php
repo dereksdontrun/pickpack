@@ -1,5 +1,5 @@
 <?php
-
+include('check_login.php');
 include('herramientas.php');
 
 //28/12/2022 Aquí procesaremos las ubicaciones

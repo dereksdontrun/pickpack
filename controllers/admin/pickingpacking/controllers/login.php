@@ -42,10 +42,18 @@ $usuarios = array(
   //25/10/2021 Cambiamos la forma de obtener los usuarios, en lugar de crear el array vamos a sacar los empleados de Prestashop y meterlos al array, de modo que no hace falta entrar aquí cada vez que se pone una nueva persona. Quitamos la separación de invitados etc.
 //sacamos el id_employee nombre y apellidos de la tabla employees, solo activos, y del perfil Superadmin, vendedor o gestion. Dejamos el array ordenado alfabeticamente por nombre
 //30/03/2023 para asegurarme de que no utilicen mi usuario voy a sacar si soy yo el que usa un navegador comprobando si existe la cookie de la Frikileria y si soy el usuario
+//13/01/2025 Vamos a utilizar la cookie para saber si además el usuario ha hecho login en Prestashop, si no es así no continuamos
 //sacamos la cookie. Con ella sabremos si es un usuario logado y después generamos el token para dicho empleado y adminproducts
 $cookie = new Cookie('psAdmin', '', (int)Configuration::get('PS_COOKIE_LIFETIME_BO'));
 $excluir = '';
-  if (empty($cookie->id_employee) || $cookie->id_employee != 22) {
+  if (empty($cookie->id_employee)) {
+    echo 'ATENCIÓN: DEBES HACER LOGIN EN LAFRIKILERIA.COM';
+
+    exit;    
+  }
+
+  if ($cookie->id_employee != 22) {
+    //si no tiene id 22 de empleado, lo quitamso del select
     $excluir = ',22';
   }
 

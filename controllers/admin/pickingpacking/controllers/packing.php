@@ -1,5 +1,6 @@
 <?php
 
+include('check_login.php');
 include('herramientas.php');
 
 //si llegamos desde pickpackindex tras pasar por el login
@@ -377,7 +378,7 @@ function procesaOrder($info_pedido) {
             
             //si hay cajas queremos sacar los mensajes de cliente para la caja y marcar packing comenzado a cada pedido de productos de caja
             if (count($ids_orders_caja_sorpresa) > 0) {
-                $mensajes_cliente_cajas = mensajesCajas($ids_orders_caja_sorpresa);
+                $mensajes_cliente_cajas = mensajesCajas($ids_orders_caja_sorpresa, $id_order);
                 comenzadoPackingCajas($id_order, $ids_orders_caja_sorpresa);                  
             }  
             
@@ -408,9 +409,10 @@ function mensajesOrder($id_order) {
     $mensajes_pedido_manual = Db::getInstance()->ExecuteS($sql_mensajes_pedido_manual);        
 
     // Mensajes sobre pedido de clientes y empleados. Son tanto el mensaje que puede dejar el cliente en el carro de compra como los posteriores que puede dejar sobre el pedido en el área de cliente/pedidos y además los mensajes tanto privados como públicos que dejan los empleados sobre el pedido dentro de la ficha de pedido.
-    $sql_mensajes_sobre_pedido = "SELECT cum.id_employee AS id_empleado, CONCAT(emp.firstname,' ',emp.lastname) AS nombre_empleado, cum.message AS mensaje, cum.private AS privado, cum.date_add AS fecha
+    $sql_mensajes_sobre_pedido = "SELECT cum.id_employee AS id_empleado, CONCAT(emp.firstname,' ',emp.lastname) AS nombre_empleado, cum.message AS mensaje, cum.private AS privado, cum.date_add AS fecha, CONCAT(cus.firstname,' ',cus.lastname) AS nombre_cliente
     FROM lafrips_customer_message cum
     JOIN lafrips_customer_thread cut ON cut.id_customer_thread = cum.id_customer_thread
+    LEFT JOIN lafrips_customer cus ON cus.id_customer = cut.id_customer
     LEFT JOIN lafrips_employee emp ON emp.id_employee = cum.id_employee
     WHERE cut.id_order = ".$id_order."
     ORDER BY cum.date_add DESC;";
@@ -436,7 +438,7 @@ function mensajesOrder($id_order) {
             if ($mensaje['id_empleado'] != 0){
                 $mensajeador = $mensaje['nombre_empleado'];
             } else {
-                $mensajeador = 'CLIENTE: '.$nombre_cliente;
+                $mensajeador = 'CLIENTE: '.$mensaje['nombre_cliente'];
             }
             //si el mensaje es privado lo indicamos
             if ($mensaje['privado'] != 0){
@@ -460,7 +462,7 @@ function mensajesOrder($id_order) {
 }
 
 //función que recibe los ids de pedidos caja sorpresa y devuelve el/los mensajes del cliente para crear la caja
-function mensajesCajas($ids_orders_caja_sorpresa) {
+function mensajesCajas($ids_orders_caja_sorpresa, $id_order) {
     $mensaje_caja = '';
     $mensajes_cliente_cajas = array();
     //buscamos los mensajes de cada caja y montamos $mensajes_cajas

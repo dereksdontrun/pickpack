@@ -1,5 +1,6 @@
 <?php
 
+include('check_login.php');
 include('herramientas.php');
 
 //09/11/2022 Añadimos la funcionalidad para sacar varios pedidos a la vez (uno tras otro). Lo llamo pickin-packing varios. Consiste en seleccionar el botón picking/packing varios en la pantalla de login e introducir un pedido a buscar. Se buscarán los ids de todos los pedidos del cliente de ese pedido que tengan el trasnportista Guárdamelo (promo de Black friday de 2022), aunque esto se podría poner como buscar pedidos no enviados o algo así. Con esos id orders iremos mostrando cada pedido uno detrás de otro pero procesándolos individualmente, para no tener que hacer un nuevo pickpack. Al finalizar un pedido deberá mostrarse el siguiente. Para diferenciar si hemos pulsado sobre el botón normal de Picking o sobre  Picking Varios, en la url que viene desde pickpackindex habremos añadido un parámetro varios con valor 1 junto al id de empleado
